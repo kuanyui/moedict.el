@@ -96,14 +96,70 @@
 ;; =================================================================
 
 (defun vector-to-list (input)
+  "[a b c] => (a b c)"
   (mapcar (lambda (x) x) input))
 
+
+(defun moedict-run (word)
+  (let (FINALE)
+;;    (moedict-run-title (moedict-retrieve-json word))
+    (moedict-run-title word)            ;測試用，用variable
+    (insert (format "%s" FINALE))))
+
+(defun moedict-run-title (parsed-json)
+  ""
+  (let (title radical stroke_count non_radical_stroke_count heteronyms)
+    (when (setq title (cdr (assoc 'title parsed-json)))
+      (progn (put-text-property 0 (length title) 'face 'moedict-title title)))
+
+    (when (setq radical (cdr (assoc 'radical parsed-json)))
+      (progn (put-text-property 0 (length radical) 'face 'moedict-stroke-count radical)
+             (setq FINALE (format "%s%s" FINALE radical))))
+
+    (when (setq stroke_count (format "%s" (cdr (assoc 'stroke_count parsed-json))))
+      (progn (put-text-property 0 (length stroke_count) 'face 'moedict-stroke-count stroke_count)
+             (setq FINALE (format "%s + %s" FINALE stroke_count))))
+
+    (when (setq non_radical_stroke_count (format "%s" (cdr (assoc 'non_radical_stroke_count parsed-json))))
+      (progn (put-text-property 0 (length non_radical_stroke_count) 'face 'moedict-stroke-count non_radical_stroke_count)
+             (setq FINALE (format "%s = %s" FINALE non_radical_stroke_count))))
+
+    (when (setq heteronyms (cdr (assoc 'heteronyms parsed-json)))
+      (setq FINALE (format "%s\n\n%s" FINALE
+                           (moedict-run-heteronyms heteronyms))))))
+
+(defun moedict-run-heteronyms (heteronyms)
+  "輸入為vector(heteronyms的cdr)。此function會把vector轉換成list後，用dolist一項項送給moedict-run-heteronym"
+  (let (HETERONYMS)
+    (dolist (x (vector-to-list heteronyms))
+      (moedict-run-heteronym x))
+    (format "%s" HETERONYMS)))
+
+(defun moedict-run-heteronym (heteronym)
+  "輸入為heteronyms的cdr中的小項目，為list，如((pinyin . liao) (definitions . ...))
+因為輸出存在 HETERONYMS，請透過moedict-run-heteronyms來呼叫此function"
+  (let (bopomofo pinyin bopomofo2 HETERONYM)
+    (setq HETERONYM (format "%s\n\n%s" HETERONYM title)) ;;總之先加上title
+    (when (setq bopomofo (cdr (assoc 'bopomofo heteronym)))
+      (progn (put-text-property 0 (length bopomofo) 'face 'moedict-bopomofo bopomofo)
+             (setq HETERONYM (format "%s  %s" HETERONYM bopomofo))))
+    (when (setq pinyin (cdr (assoc 'pinyin heteronym)))
+      (progn (put-text-property 0 (length pinyin) 'face 'moedict-pinyin pinyin)
+             (setq HETERONYM (format "%s  %s" HETERONYM pinyin))))
+    (when (setq bopomofo2 (cdr (assoc 'bopomofo2 heteronym)))
+      (progn (put-text-property 0 (length bopomofo2) 'face 'moedict-bopomofo2 bopomofo2)
+             (setq HETERONYM (format "%s  %s" HETERONYM bopomofo2))))
+    (setq HETERONYM
+          (format "%s\n\n%s" HETERONYM
+                  (moedict-run-definitions (cdr (assoc 'definitions heteronym)))))
+    (print (format "%s\n\n%s" HETERONYMS HETERONYM))))
+
 (defun moedict-run-definitions (definitions)
-  "輸入為vector。此function會把vector轉換成list後，用 dolist 一項項送給 moedict-run-definition"
-  (let* (DEFINITIONS last-type) ;DEFINITIONS是用來存整個definitions的cdr的最後輸出
+  "輸入為vector(definitions的cdr)。此function會把vector轉換成list後，用 dolist 一項項送給 moedict-run-definition"
+  (let (DEFINITIONS last-type) ;DEFINITIONS是用來存整個definitions的cdr的最後輸出
     (dolist (x (vector-to-list definitions))
       (moedict-run-definition x))
-    (insert DEFINITIONS)))
+    (print DEFINITIONS)))
 
 (defun moedict-run-definition (definition)
   "輸入需為一個list，如:((type . \"名\") (def . \"羊\"))"
@@ -117,31 +173,25 @@
             (setq type (format "[%s]" type))
             (put-text-property 0 (length type) 'face 'moedict-type type)
             (setq DEFINITIONS (format "%s\n\n  %s" DEFINITIONS type)))))
-
     (when (setq def (cdr (assoc 'def definition)))
       (progn (put-text-property 0 (length def) 'face 'moedict-def def)
              (setq DEFINITIONS (format "%s\n\n    %s" DEFINITIONS def))))
-
     ;; example的cdr是vector
     (when (setq example (cdr (assoc 'example definition)))
       (dolist (x (vector-to-list example))
         (put-text-property 0 (length x) 'face 'moedict-example x)
         (setq DEFINITIONS (format "%s\n        %s" DEFINITIONS x))))
-
     ;; quote的cdr是是vector
     (when (setq quote (cdr (assoc 'quote definition)))
       (dolist (x (vector-to-list quote))
         (put-text-property 0 (length x) 'face 'moedict-quote x)
         (setq DEFINITIONS (format "%s\n        %s" DEFINITIONS x))))
-
     (when (setq synonyms (cdr (assoc 'synonyms definition)))
       (progn (put-text-property 0 (length synonyms) 'face 'moedict-synonyms synonyms)
              (setq DEFINITIONS (format "%s\n            %s" DEFINITIONS synonyms))))
-
     (when (setq antonyms (cdr (assoc 'antonyms definition)))
       (progn (put-text-property 0 (length antonyms) 'face 'moedict-antonyms antonyms)
              (setq DEFINITIONS (format "%s\n            %s" DEFINITIONS antonyms))))
-
     (when (setq link (cdr (assoc 'link definition)))
       (progn (put-text-property 0 (length link) 'face 'moedict-link link)
              (setq DEFINITIONS (format "%s\n            %s" DEFINITIONS link))))))
