@@ -111,32 +111,28 @@
   (let (title radical stroke_count non_radical_stroke_count heteronyms)
     (when (setq title (cdr (assoc 'title parsed-json)))
       (progn (put-text-property 0 (length title) 'face 'moedict-title title)))
-
     (when (setq radical (cdr (assoc 'radical parsed-json)))
       (progn (put-text-property 0 (length radical) 'face 'moedict-stroke-count radical)
              (setq FINALE (format "%s%s" FINALE radical))))
-
     (when (setq stroke_count (format "%s" (cdr (assoc 'stroke_count parsed-json))))
       (progn (put-text-property 0 (length stroke_count) 'face 'moedict-stroke-count stroke_count)
              (setq FINALE (format "%s + %s" FINALE stroke_count))))
-
     (when (setq non_radical_stroke_count (format "%s" (cdr (assoc 'non_radical_stroke_count parsed-json))))
       (progn (put-text-property 0 (length non_radical_stroke_count) 'face 'moedict-stroke-count non_radical_stroke_count)
              (setq FINALE (format "%s = %s" FINALE non_radical_stroke_count))))
-
     (when (setq heteronyms (cdr (assoc 'heteronyms parsed-json)))
       (setq FINALE (format "%s\n\n%s" FINALE
                            (moedict-run-heteronyms heteronyms))))))
 
 (defun moedict-run-heteronyms (heteronyms)
-  "輸入為vector(heteronyms的cdr)。此function會把vector轉換成list後，用dolist一項項送給moedict-run-heteronym"
+  "輸入為heteronyms的cdr (形式是vector)。此function會把vector轉換成list後，用dolist一項項送給moedict-run-heteronym"
   (let (HETERONYMS)
-    (dolist (x (vector-to-list heteronyms))
-      (moedict-run-heteronym x))
-    (format "%s" HETERONYMS)))
+      (dolist (x (vector-to-list heteronyms))
+        (moedict-run-heteronym x))
+      (format "%s" HETERONYMS)))
 
 (defun moedict-run-heteronym (heteronym)
-  "輸入為heteronyms的cdr中的小項目，為list，如((pinyin . liao) (definitions . ...))
+  "輸入為heteronyms的cdr中的小項目（單個heteronym），為list，如((pinyin . liao) (definitions . ...))
 因為輸出存在 HETERONYMS，請透過moedict-run-heteronyms來呼叫此function"
   (let (bopomofo pinyin bopomofo2 HETERONYM)
     (setq HETERONYM (format "%s\n\n%s" HETERONYM title)) ;;總之先加上title
@@ -152,14 +148,14 @@
     (setq HETERONYM
           (format "%s\n\n%s" HETERONYM
                   (moedict-run-definitions (cdr (assoc 'definitions heteronym)))))
-    (print (format "%s\n\n%s" HETERONYMS HETERONYM))))
+    (setq HETERONYMS (format "%s\n\n%s" HETERONYMS HETERONYM))))
 
 (defun moedict-run-definitions (definitions)
   "輸入為vector(definitions的cdr)。此function會把vector轉換成list後，用 dolist 一項項送給 moedict-run-definition"
   (let (DEFINITIONS last-type) ;DEFINITIONS是用來存整個definitions的cdr的最後輸出
     (dolist (x (vector-to-list definitions))
       (moedict-run-definition x))
-    (print DEFINITIONS)))
+    (format "%s" DEFINITIONS)))
 
 (defun moedict-run-definition (definition)
   "輸入需為一個list，如:((type . \"名\") (def . \"羊\"))"
