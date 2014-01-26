@@ -32,7 +32,7 @@
   :group 'moedict-faces)
 
 (defface moedict-radical
-  '((((class color)) (:foreground "#ffffff" :background "#c0c0c0")))
+  '((((class color)) (:foreground "#ffffff" :background "#787878")))
   "This comment is necessary"
   :group 'moedict-faces)
 
@@ -42,7 +42,7 @@
   :group 'moedict-faces)
 
 (defface moedict-bopomofo
-  '((((class color)) (:foreground "#6c0099" :background nil)))
+  '((((class color)) (:foreground "#008700" :background "#d7ff87")))
   "This comment is necessary"
   :group 'moedict-faces)
 
@@ -57,7 +57,7 @@
   :group 'moedict-faces)
 
 (defface moedict-type
-  '((((class color)) (:foreground "#ffffd7" :background "#525252" :bold t)))
+  '((((class color)) (:foreground "#ffffd7" :background "#525252")))
   "This comment is necessary"
   :group 'moedict-faces)
 
@@ -67,27 +67,27 @@
   :group 'moedict-faces)
 
 (defface moedict-def
-  '((((class color)) (:foreground "#5f87af" :background nil)))
+  '((((class color)) (:foreground "#1f5bff" :background nil)))
   "This comment is necessary"
   :group 'moedict-faces)
 
 (defface moedict-example
-  '((((class color)) (:foreground "#ff8700" :background nil)))
+  '((((class color)) (:foreground "#525252" :background nil)))
   "This comment is necessary"
   :group 'moedict)
 
 (defface moedict-link
-  '((((class color)) (:foreground "#00af00" :background nil)))
-  "This comment is necessary"
-  :group 'moedict)
-
-(defface moedict-synonyms
   '((((class color)) (:foreground "#00d7af" :background nil)))
   "This comment is necessary"
   :group 'moedict)
 
+(defface moedict-synonyms
+  '((((class color)) (:foreground "#9a08ff" :background nil)))
+  "This comment is necessary"
+  :group 'moedict)
+
 (defface moedict-antonyms
-  '((((class color)) (:foreground "#cc0000" :background nil)))
+  '((((class color)) (:foreground "#9a08ff" :background nil)))
   "This comment is necessary"
   :group 'moedict)
 
@@ -112,7 +112,7 @@
     (when (setq title (cdr (assoc 'title parsed-json)))
       (progn (put-text-property 0 (length title) 'face 'moedict-title title)))
     (when (setq radical (cdr (assoc 'radical parsed-json)))
-      (progn (put-text-property 0 (length radical) 'face 'moedict-stroke-count radical)
+      (progn (put-text-property 0 (length radical) 'face 'moedict-radical radical)
              (setq FINALE (format "%s%s" FINALE radical))))
     (when (setq stroke_count (format "%s" (cdr (assoc 'stroke_count parsed-json))))
       (progn (put-text-property 0 (length stroke_count) 'face 'moedict-stroke-count stroke_count)
