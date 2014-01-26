@@ -127,15 +127,15 @@
   (let (title radical stroke_count non_radical_stroke_count heteronyms)
     (when (setq title (cdr (assoc 'title parsed-json)))
       (progn (put-text-property 0 (length title) 'face 'moedict-title title)))
-    (when (setq radical (cdr (assoc 'radical parsed-json)))
-      (progn (put-text-property 0 (length radical) 'face 'moedict-radical radical)
-             (setq FINALE (format "%s" radical))))
-    (when (setq stroke_count (format "%s" (cdr (assoc 'stroke_count parsed-json))))
-      (progn (put-text-property 0 (length stroke_count) 'face 'moedict-stroke-count stroke_count)
-             (setq FINALE (format "%s + %s" FINALE stroke_count))))
-    (when (setq non_radical_stroke_count (format "%s" (cdr (assoc 'non_radical_stroke_count parsed-json))))
-      (progn (put-text-property 0 (length non_radical_stroke_count) 'face 'moedict-stroke-count non_radical_stroke_count)
-             (setq FINALE (format "%s = %s" FINALE non_radical_stroke_count))))
+    (if (setq radical (cdr (assoc 'radical parsed-json)))
+        (progn (put-text-property 0 (length radical) 'face 'moedict-radical radical)
+               (setq FINALE (format "%s" radical))
+               (setq stroke_count (format "%s" (cdr (assoc 'stroke_count parsed-json))))
+               (put-text-property 0 (length stroke_count) 'face 'moedict-stroke-count stroke_count)
+               (setq FINALE (format "%s + %s" FINALE stroke_count))
+               (setq non_radical_stroke_count (format "%s" (cdr (assoc 'non_radical_stroke_count parsed-json))))
+               (put-text-property 0 (length non_radical_stroke_count) 'face 'moedict-stroke-count non_radical_stroke_count)
+               (setq FINALE (format "%s = %s" FINALE non_radical_stroke_count))))
     (when (setq heteronyms (cdr (assoc 'heteronyms parsed-json)))
       (setq FINALE (format "%s" (concat FINALE
                                         "\n\n"
@@ -152,7 +152,7 @@
   "輸入為heteronyms的cdr中的小項目（單個heteronym），為list，如((pinyin . liao) (definitions . ...))
 因為輸出存在 HETERONYMS，請透過moedict-run-heteronyms來呼叫此function"
   (let (bopomofo pinyin bopomofo2 HETERONYM)
-    (setq HETERONYM (format "%s" (concat HETERONYM "\n" title))) ;;總之先加上title
+    (setq HETERONYM (format "%s" (concat HETERONYM title))) ;;總之先加上title
     (when (setq bopomofo (cdr (assoc 'bopomofo heteronym)))
       (progn (put-text-property 0 (length bopomofo) 'face 'moedict-bopomofo bopomofo)
              (setq HETERONYM (format "%s %s" HETERONYM bopomofo))))
@@ -165,7 +165,7 @@
     (setq HETERONYM
           (format "\n%s%s" HETERONYM
                   (moedict-run-definitions (cdr (assoc 'definitions heteronym)))))
-    (setq HETERONYMS (format "%s\n%s" HETERONYMS HETERONYM))))
+    (setq HETERONYMS (format "%s" (concat HETERONYMS "\n" HETERONYM)))))
 
 (defun moedict-run-definitions (definitions)
   "輸入為vector(definitions的cdr)。此function會把vector轉換成list後，用 dolist 一項項送給 moedict-run-definition"
@@ -188,7 +188,7 @@
             (setq DEFINITIONS (format "%s" (concat DEFINITIONS "\n\n " type))))))
     (when (setq def (cdr (assoc 'def definition)))
       (progn (put-text-property 0 (length def) 'face 'moedict-def def)
-             (setq DEFINITIONS (format "%s\n\n    %s" DEFINITIONS def))))
+             (setq DEFINITIONS (format "%s" (concat DEFINITIONS "\n\n    " def)))))
     ;; example的cdr是vector
     (when (setq example (cdr (assoc 'example definition)))
       (dolist (x (vector-to-list example))
