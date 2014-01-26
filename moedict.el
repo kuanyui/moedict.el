@@ -1,14 +1,18 @@
+(require 'json)
+(require 'url)
+
 (defun moedict-retrieve-json (word)
   "Get JSON and return the parsed list of the word."
-  (with-current-buffer
-      (url-retrieve-synchronously
-       (format "https://www.moedict.tw/uni/%s.json" word))
+    (with-current-buffer
+  (let ((url-request-method "GET")
+        (url-request-extra-headers '(("Content-Type" . "application/x-www-form-urlencoded"))))
+    (url-retrieve-synchronously
+     (format "https://www.moedict.tw/uni/%s.json" word))
     (set-buffer-multibyte t)
     (re-search-backward "\n\n")
     (delete-region (point-min) (point))
-    (json-read-from-string (buffer-string))))
-
-;; 上面沒問題了不要再改了
+    (json-read-from-string (buffer-string)))))
+  ;; 上面沒問題了不要再改了
 
 ;; (defgroup markdown nil
 ;;   "Major mode for editing text files in Markdown format."
@@ -27,7 +31,7 @@
   :group 'moedict-faces)
 
 (defface moedict-stroke-count
-  '((((class color)) (:foreground "#c0c0c0" :background nil)))
+  '((((class color)) (:foreground "#787878" :background nil)))
   "This comment is necessary"
   :group 'moedict-faces)
 
@@ -94,13 +98,25 @@
 ;; =================================================================
 ;; defface結束
 ;; =================================================================
+(require 'json)
+(require 'url)
+(defun moedict-retrieve-json (word)
+  "Get JSON and return the parsed list of the word."
+  (with-current-buffer
+      (url-retrieve-synchronously
+       (format "https://www.moedict.tw/uni/%s.json" word))
+    (set-buffer-multibyte t)
+    (re-search-backward "\n\n")
+    (delete-region (point-min) (point))
+    (json-read-from-string (buffer-string))))
+
 
 (defun vector-to-list (input)
   "[a b c] => (a b c)"
   (mapcar (lambda (x) x) input))
 
 
-(defun moedict-run (word)
+(defun moedict-run-parser (word)
   (let (FINALE)
 ;;    (moedict-run-title (moedict-retrieve-json word))
     (moedict-run-title word)            ;測試用，用variable
@@ -113,7 +129,7 @@
       (progn (put-text-property 0 (length title) 'face 'moedict-title title)))
     (when (setq radical (cdr (assoc 'radical parsed-json)))
       (progn (put-text-property 0 (length radical) 'face 'moedict-radical radical)
-             (setq FINALE (format "%s%s" FINALE radical))))
+             (setq FINALE (format "%s" radical))))
     (when (setq stroke_count (format "%s" (cdr (assoc 'stroke_count parsed-json))))
       (progn (put-text-property 0 (length stroke_count) 'face 'moedict-stroke-count stroke_count)
              (setq FINALE (format "%s + %s" FINALE stroke_count))))
