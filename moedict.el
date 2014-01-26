@@ -137,8 +137,9 @@
       (progn (put-text-property 0 (length non_radical_stroke_count) 'face 'moedict-stroke-count non_radical_stroke_count)
              (setq FINALE (format "%s = %s" FINALE non_radical_stroke_count))))
     (when (setq heteronyms (cdr (assoc 'heteronyms parsed-json)))
-      (setq FINALE (format "%s\n\n%s" FINALE
-                           (moedict-run-heteronyms heteronyms))))))
+      (setq FINALE (format "%s" (concat FINALE
+                                        "\n\n"
+                                        (moedict-run-heteronyms heteronyms)))))))
 
 (defun moedict-run-heteronyms (heteronyms)
   "輸入為heteronyms的cdr (形式是vector)。此function會把vector轉換成list後，用dolist一項項送給moedict-run-heteronym"
@@ -151,20 +152,20 @@
   "輸入為heteronyms的cdr中的小項目（單個heteronym），為list，如((pinyin . liao) (definitions . ...))
 因為輸出存在 HETERONYMS，請透過moedict-run-heteronyms來呼叫此function"
   (let (bopomofo pinyin bopomofo2 HETERONYM)
-    (setq HETERONYM (format "%s\n\n%s" HETERONYM title)) ;;總之先加上title
+    (setq HETERONYM (format "%s" (concat HETERONYM "\n" title))) ;;總之先加上title
     (when (setq bopomofo (cdr (assoc 'bopomofo heteronym)))
       (progn (put-text-property 0 (length bopomofo) 'face 'moedict-bopomofo bopomofo)
-             (setq HETERONYM (format "%s  %s" HETERONYM bopomofo))))
+             (setq HETERONYM (format "%s %s" HETERONYM bopomofo))))
     (when (setq pinyin (cdr (assoc 'pinyin heteronym)))
       (progn (put-text-property 0 (length pinyin) 'face 'moedict-pinyin pinyin)
-             (setq HETERONYM (format "%s  %s" HETERONYM pinyin))))
+             (setq HETERONYM (format "%s %s" HETERONYM pinyin))))
     (when (setq bopomofo2 (cdr (assoc 'bopomofo2 heteronym)))
       (progn (put-text-property 0 (length bopomofo2) 'face 'moedict-bopomofo2 bopomofo2)
-             (setq HETERONYM (format "%s  %s" HETERONYM bopomofo2))))
+             (setq HETERONYM (format "%s %s" HETERONYM bopomofo2))))
     (setq HETERONYM
-          (format "%s\n\n%s" HETERONYM
+          (format "\n%s%s" HETERONYM
                   (moedict-run-definitions (cdr (assoc 'definitions heteronym)))))
-    (setq HETERONYMS (format "%s\n\n%s" HETERONYMS HETERONYM))))
+    (setq HETERONYMS (format "%s\n%s" HETERONYMS HETERONYM))))
 
 (defun moedict-run-definitions (definitions)
   "輸入為vector(definitions的cdr)。此function會把vector轉換成list後，用 dolist 一項項送給 moedict-run-definition"
@@ -184,7 +185,7 @@
             ;; 因為沒處理過的last-type已經setq好了，就可以大膽改type的顏色和值，不用擔心之後equal失敗問題
             (setq type (format "[%s]" type))
             (put-text-property 0 (length type) 'face 'moedict-type type)
-            (setq DEFINITIONS (format "%s\n\n  %s" DEFINITIONS type)))))
+            (setq DEFINITIONS (format "%s" (concat DEFINITIONS "\n\n " type))))))
     (when (setq def (cdr (assoc 'def definition)))
       (progn (put-text-property 0 (length def) 'face 'moedict-def def)
              (setq DEFINITIONS (format "%s\n\n    %s" DEFINITIONS def))))
