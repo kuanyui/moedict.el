@@ -1,24 +1,23 @@
 (require 'json)
 (require 'url)
 
-(defun moedict-retrieve-json (word)
-  "Get JSON and return the parsed list of the word."
-    (with-current-buffer
-  (let ((url-request-method "GET")
-        (url-request-extra-headers '(("Content-Type" . "application/x-www-form-urlencoded"))))
-    (url-retrieve-synchronously
-     (format "https://www.moedict.tw/uni/%s.json" word))
-    (set-buffer-multibyte t)
-    (re-search-backward "\n\n")
-    (delete-region (point-min) (point))
-    (json-read-from-string (buffer-string)))))
+;;(defun moedict-retrieve-json (word)
+;;  "Get JSON and return the parsed list of the word."
+;;    (with-current-buffer
+;;  (let ((url-request-method "GET")
+;;        (url-request-extra-headers '(("Content-Type" . "application/x-www-form-urlencoded"))))
+;;    (url-retrieve-synchronously
+;;     (format "https://www.moedict.tw/uni/%s.json" word))
+;;    (set-buffer-multibyte t)
+;;    (re-search-backward "\n\n")
+;;    (delete-region (point-min) (point))
+;;    (json-read-from-string (buffer-string)))))
   ;; 上面沒問題了不要再改了
 
-;; (defgroup markdown nil
-;;   "Major mode for editing text files in Markdown format."
-;;   :prefix "markdown-"
-;;   :group 'wp
-;;   :link '(url-link "http://jblevins.org/projects/markdown-mode/"))
+(defgroup moedict nil
+  "Major mode for looking up Chinese vocabulary via Moedict API."
+  :prefix "moedict-"
+  :link '(url-link "http://github.com/kuanyui/moedict.el/"))
 
 (defgroup moedict-faces nil
   "Faces used in Moedict-mode"
@@ -66,7 +65,7 @@
   :group 'moedict-faces)
 
 (defface moedict-quote
-  '((((class color)) (:foreground "#ff4ea3" :background nil :slant t)))
+  '((((class color)) (:foreground "#ff4ea3" :background nil :slant italic)))
   "Face for quote."
   :group 'moedict-faces)
 
@@ -104,6 +103,7 @@
 ;; defface結束
 ;; =======================================================Face for defface結束)
 (require 'url)
+
 (defun moedict-retrieve-json (word)
   "Get JSON and return the parsed list of the word."
   (with-current-buffer
@@ -138,7 +138,7 @@ e.g. [a b c] => (a b c)"
                (setq FINALE (format "%s + %s" FINALE stroke_count))
                (setq non_radical_stroke_count (format "%s" (cdr (assoc 'non_radical_stroke_count parsed-json))))
                (put-text-property 0 (length non_radical_stroke_count) 'face 'moedict-stroke-count non_radical_stroke_count)
-               (setq FINALE (format "%s = %s" FINALE non_radical_stroke_count))))
+               (setq FINALE (format "%s = %s\n\n" FINALE non_radical_stroke_count))))
     (when (setq heteronyms (cdr (assoc 'heteronyms parsed-json)))
       (setq FINALE (format "%s" (concat FINALE
                                         (moedict-run-heteronyms heteronyms)))))))
@@ -165,9 +165,9 @@ e.g. [a b c] => (a b c)"
       (progn (put-text-property 0 (length bopomofo2) 'face 'moedict-bopomofo2 bopomofo2)
              (setq HETERONYM (format "%s %s" HETERONYM bopomofo2))))
     (setq HETERONYM
-          (format "\n%s%s" HETERONYM
+          (format "%s%s\n\n" HETERONYM
                   (moedict-run-definitions (cdr (assoc 'definitions heteronym)))))
-    (setq HETERONYMS (format "%s" (concat HETERONYMS "\n" HETERONYM)))))
+    (setq HETERONYMS (format "%s" (concat HETERONYMS HETERONYM)))))
 
 (defun moedict-run-definitions (definitions)
   "輸入為vector(definitions的cdr)。此function會把vector轉換成list後，用 dolist 一項項送給 moedict-run-definition"
@@ -203,13 +203,13 @@ e.g. [a b c] => (a b c)"
         (setq DEFINITIONS (format "%s\n        %s" DEFINITIONS x))))
     (if (setq synonyms (cdr (assoc 'synonyms definition)))
         (progn (setq synonyms(concat
-                               (propertize "[同]" 'face 'moedict-syn/antonyms-tag) " " synonyms))
-               (put-text-property 4 (length synonyms) 'face 'moedict-synonyms synonyms)
+                               (propertize "同" 'face 'moedict-syn/antonyms-tag) " " synonyms))
+               (put-text-property 2 (length synonyms) 'face 'moedict-synonyms synonyms)
                (setq DEFINITIONS (format "%s\n            %s" DEFINITIONS synonyms))))
     (if (setq antonyms (cdr (assoc 'antonyms definition)))
         (progn (setq antonyms (concat
-                               (propertize "[反]" 'face 'moedict-syn/antonyms-tag) " " antonyms))
-               (put-text-property 4 (length antonyms) 'face 'moedict-antonyms antonyms)
+                               (propertize "反" 'face 'moedict-syn/antonyms-tag) " " antonyms))
+               (put-text-property 2 (length antonyms) 'face 'moedict-antonyms antonyms)
                (setq DEFINITIONS (format "%s\n            %s" DEFINITIONS antonyms))))
     ;; link的cdr是vector
     (when (setq link (cdr (assoc 'link definition)))
