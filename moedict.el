@@ -21,89 +21,88 @@
 ;;   :link '(url-link "http://jblevins.org/projects/markdown-mode/"))
 
 (defgroup moedict-faces nil
-  "Faces used in Moedict Mode"
+  "Faces used in Moedict-mode"
   :group 'moedict
   :group 'faces)
 
 (defface moedict-title
   '((((class color)) (:foreground "#ff8700" :background nil :bold t)))
-  "字的title"
+  "Face for title. ex:"
   :group 'moedict-faces)
 
 (defface moedict-stroke-count
   '((((class color)) (:foreground "#787878" :background nil)))
-  "This comment is necessary"
+  "Face for stroke-count."
   :group 'moedict-faces)
 
 (defface moedict-radical
   '((((class color)) (:foreground "#ffffff" :background "#787878")))
-  "This comment is necessary"
+  "Face for character's radical."
   :group 'moedict-faces)
 
 (defface moedict-non-radical-stroke-count
   '((((class color)) (:inherit moedict-stroke-count)))
-  "This comment is necessary"
+  "Face for non-radical stroke-count."
   :group 'moedict-faces)
 
 (defface moedict-bopomofo
   '((((class color)) (:foreground "#008700" :background "#d7ff87")))
-  "This comment is necessary"
+  "Face for bopomofo （注音符號）."
   :group 'moedict-faces)
 
 (defface moedict-bopomofo2
   '((((class color)) (:inherit moedict-bopomofo)))
-  "This comment is necessary"
+  "Face for bopomofo2 （注音二式）."
   :group 'moedict-faces)
 
 (defface moedict-pinyin
   '((((class color)) (:inherit moedict-bopomofo)))
-  "This comment is necessary"
+  "Face for pinyin （拼音）."
   :group 'moedict-faces)
 
 (defface moedict-type
   '((((class color)) (:foreground "#ffffd7" :background "#525252")))
-  "This comment is necessary"
+  "Face for type. ex: [動]、[名]"
   :group 'moedict-faces)
 
 (defface moedict-quote
-  '((((class color)) (:foreground "#ff4ea3" :background nil :italic t)))
-  "This comment is necessary"
+  '((((class color)) (:foreground "#ff4ea3" :background nil :slant t)))
+  "Face for quote."
   :group 'moedict-faces)
 
 (defface moedict-def
   '((((class color)) (:foreground "#1f5bff" :background nil)))
-  "This comment is necessary"
+  "Face for definitions."
   :group 'moedict-faces)
 
 (defface moedict-example
   '((((class color)) (:foreground "#525252" :background nil)))
-  "This comment is necessary"
+  "Face for example. ex: Example"
   :group 'moedict)
 
 (defface moedict-link
   '((((class color)) (:foreground "#00d7af" :background nil)))
-  "This comment is necessary"
+  "Face for link. ex:「見...等條」"
   :group 'moedict)
 
 (defface moedict-synonyms
   '((((class color)) (:foreground "#9a08ff" :background nil)))
-  "This comment is necessary"
+  "Face for synonyms."
   :group 'moedict)
 
 (defface moedict-antonyms
   '((((class color)) (:foreground "#9a08ff" :background nil)))
-  "This comment is necessary"
+  "Face for antonyms."
   :group 'moedict)
 
 (defface moedict-syn/antonyms-tag
   '((((class color)) (:foreground "#ffffff" :background "#9a08ff")))
-  "This comment is necessary"
+  "Face for syn/antonyms-tag. ex: [同]"
   :group 'moedict)
 
 ;; =================================================================
 ;; defface結束
-;; =================================================================
-(require 'json)
+;; =======================================================Face for defface結束)
 (require 'url)
 (defun moedict-retrieve-json (word)
   "Get JSON and return the parsed list of the word."
@@ -115,11 +114,10 @@
     (delete-region (point-min) (point))
     (json-read-from-string (buffer-string))))
 
-
 (defun vector-to-list (input)
-  "[a b c] => (a b c)"
+  "A tools to covert vector to list, hence `dolist' available.
+e.g. [a b c] => (a b c)"
   (mapcar (lambda (x) x) input))
-
 
 (defun moedict-run-parser (word)
   (let (FINALE)
