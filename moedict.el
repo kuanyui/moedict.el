@@ -95,6 +95,11 @@
   "This comment is necessary"
   :group 'moedict)
 
+(defface moedict-syn/antonyms-tag
+  '((((class color)) (:foreground "#ffffff" :background "#9a08ff")))
+  "This comment is necessary"
+  :group 'moedict)
+
 ;; =================================================================
 ;; defface結束
 ;; =================================================================
@@ -199,11 +204,13 @@
         (put-text-property 0 (length x) 'face 'moedict-quote x)
         (setq DEFINITIONS (format "%s\n        %s" DEFINITIONS x))))
     (if (setq synonyms (cdr (assoc 'synonyms definition)))
-        (progn (setq synonyms (concat "[同] " synonyms))
+        (progn (setq synonyms(concat
+                               (propertize "[同]" 'face 'moedict-syn/antonyms-tag) " " synonyms))
                (put-text-property 4 (length synonyms) 'face 'moedict-synonyms synonyms)
                (setq DEFINITIONS (format "%s\n            %s" DEFINITIONS synonyms))))
     (if (setq antonyms (cdr (assoc 'antonyms definition)))
-        (progn (setq antonyms (concat "[反] " antonyms))
+        (progn (setq antonyms (concat
+                               (propertize "[反]" 'face 'moedict-syn/antonyms-tag) " " antonyms))
                (put-text-property 4 (length antonyms) 'face 'moedict-antonyms antonyms)
                (setq DEFINITIONS (format "%s\n            %s" DEFINITIONS antonyms))))
     ;; link的cdr是vector
