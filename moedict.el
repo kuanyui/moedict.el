@@ -186,12 +186,15 @@ e.g. [a b c] => (a b c)"
     (if (setq radical (cdr (assoc 'radical parsed-json)))
         (progn (put-text-property 0 (length radical) 'face 'moedict-radical radical)
                (setq FINALE (format "%s" radical))
-               (setq stroke_count (format "%s" (cdr (assoc 'stroke_count parsed-json))))
-               (put-text-property 0 (length stroke_count) 'face 'moedict-stroke-count stroke_count)
-               (setq FINALE (format "%s + %s" FINALE stroke_count))
+
                (setq non_radical_stroke_count (format "%s" (cdr (assoc 'non_radical_stroke_count parsed-json))))
                (put-text-property 0 (length non_radical_stroke_count) 'face 'moedict-stroke-count non_radical_stroke_count)
-               (setq FINALE (format "%s = %s\n\n" FINALE non_radical_stroke_count))))
+               (setq FINALE (format "%s + %s" FINALE non_radical_stroke_count))
+
+               (setq stroke_count (format "%s" (cdr (assoc 'stroke_count parsed-json))))
+               (put-text-property 0 (length stroke_count) 'face 'moedict-stroke-count stroke_count)
+               (setq FINALE (format "%s = %s\n\n" FINALE stroke_count))))
+
     (when (setq heteronyms (cdr (assoc 'heteronyms parsed-json)))
       (setq FINALE (format "%s" (concat FINALE
                                         (moedict-run-heteronyms heteronyms)))))))
