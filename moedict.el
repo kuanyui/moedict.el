@@ -14,10 +14,48 @@
 ;;    (json-read-from-string (buffer-string)))))
   ;; 上面沒問題了不要再改了
 
+
+(defcustom moedict-mode-hook nil
+  "Normal hook run when entering moedict-mode."
+  :type 'hook
+  :group nil)
+
+(define-derived-mode moedict-mode nil "MoeDict"
+  "Major mode for looking up Chinese vocabulary via Moedict API."
+  (set (make-local-variable 'buffer-read-only) t))
+
 (defgroup moedict nil
   "Major mode for looking up Chinese vocabulary via Moedict API."
   :prefix "moedict-"
-  :link '(url-link "http://github.com/kuanyui/moedict.el/"))
+  :link '(url-link "http://github.com/kuanyui/moedict.el"))
+
+(defvar moedict-mode-map
+  (let ((map (make-keymap)))
+    ;; Element insertion
+    (define-key map (kbd "q") 'quit-window)
+    (define-key map (kbd "l") 'moedict-lookup)
+    (define-key map (kbd "r") 'moedict-lookup-region)
+    map)
+  "Keymap for Moedict major mode.")
+
+(defun moedict-lookup ()
+  (interactive)
+  (let ((user-input (read-from-minibuffer "萌典：")))
+    (if (stringp user-input)
+        (with-temp-buffer-window "*moedict*" nil nil
+                                 (let (buffer-read-only)
+                                   (insert (moedict-run-parser user-input)))
+                                 (moedict-mode)
+                                 (switch-to-buffer-other-window "*moedict*"))
+      (message "Input should be a string."))))
+
+(defun moedict-lookup-region (begin end)
+  (interactive "r")
+  (let* ((user-input (format "%s"(buffer-substring-no-properties begin end))))
+    (with-temp-buffer-window "*moedict*" nil nil
+                             (let (buffer-read-only)
+                                   (insert (moedict-run-parser user-input)))
+                                 (moedict-mode))))
 
 (defgroup moedict-faces nil
   "Faces used in Moedict-mode"
@@ -99,6 +137,8 @@
   "Face for syn/antonyms-tag. ex: [同]"
   :group 'moedict)
 
+
+
 ;; =================================================================
 ;; defface結束
 ;; =======================================================Face for defface結束)
@@ -119,11 +159,18 @@
 e.g. [a b c] => (a b c)"
   (mapcar (lambda (x) x) input))
 
+;;  (with-output-to-temp-buffer)
+;;  (with-temp-buffer-window)
+;;  (switch-to-buffer)
+;;  (set-buffer)
+
 (defun moedict-run-parser (word)
+  "目前暫時會insert，要不要改成不會insert?已改掉。"
   (let (FINALE)
-;;    (moedict-run-title (moedict-retrieve-json word))
-    (moedict-run-title word)            ;測試用，用variable
-    (insert (format "%s" FINALE))))
+    (moedict-run-title (moedict-retrieve-json word))
+;;    (moedict-run-title word)            ;測試用，用variable
+    (let (buffer-read-only)
+      (format "%s" FINALE))))
 
 (defun moedict-run-title (parsed-json)
   ""
