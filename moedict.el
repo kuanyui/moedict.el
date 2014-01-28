@@ -14,11 +14,22 @@
 ;;    (json-read-from-string (buffer-string)))))
   ;; 上面沒問題了不要再改了
 
-
 (defcustom moedict-mode-hook nil
   "Normal hook run when entering moedict-mode."
   :type 'hook
   :group nil)
+
+(defvar moedict-mode-map
+  (let ((map (make-sparse-keymap)))
+    ;; Element insertion
+    (define-key map (kbd "q") 'quit-window)
+    (define-key map (kbd "l") 'moedict-lookup)
+    (define-key map (kbd "r") 'moedict-lookup-region)
+    map)
+  "Keymap for Moedict major mode.")
+
+;; (defvar moedict-lookup-ring nil
+;;   "History of moedict-lookup.")
 
 (define-derived-mode moedict-mode nil "MoeDict"
   "Major mode for looking up Chinese vocabulary via Moedict API."
@@ -28,15 +39,6 @@
   "Major mode for looking up Chinese vocabulary via Moedict API."
   :prefix "moedict-"
   :link '(url-link "http://github.com/kuanyui/moedict.el"))
-
-(defvar moedict-mode-map
-  (let ((map (make-keymap)))
-    ;; Element insertion
-    (define-key map (kbd "q") 'quit-window)
-    (define-key map (kbd "l") 'moedict-lookup)
-    (define-key map (kbd "r") 'moedict-lookup-region)
-    map)
-  "Keymap for Moedict major mode.")
 
 (defun moedict-lookup ()
   (interactive)
@@ -51,11 +53,15 @@
 
 (defun moedict-lookup-region (begin end)
   (interactive "r")
-  (let* ((user-input (format "%s"(buffer-substring-no-properties begin end))))
-    (with-temp-buffer-window "*moedict*" nil nil
-                             (let (buffer-read-only)
+  (if (region-active-p)
+      (let* ((user-input (format "%s" (buffer-substring-no-properties begin end))))
+        (with-temp-buffer-window "*moedict*" nil nil
+                                 (let (buffer-read-only)
                                    (insert (moedict-run-parser user-input)))
-                                 (moedict-mode))))
+                                 (moedict-mode)))
+    (let* ((mark-even-if-inactive t))
+      (set-mark-command nil)
+      (message "r again to finish."))))
 
 (defgroup moedict-faces nil
   "Faces used in Moedict-mode"
