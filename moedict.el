@@ -22,7 +22,7 @@
     map)
   "Keymap for Moedict major mode.")
 
-;; History格式（數字為moedict-history-n、即nthcdr所用的值）：
+;; moedict-history格式（數字為moedict-history-n、即nthcdr所用的值）：
 ;; ("最新0" "1" "2" "3" ...)
 (defvar moedict-history nil
   "History list of current moedict buffer.")
@@ -30,8 +30,10 @@
   "Record current position in moedict history list")
 ;; [FIXME] 以上兩者應該改成*moedict*內的local variable，但我做不出來，好像每次 (with-temp-buffer-window ...)都會改掉local variable.暫時先定義一個function讓人可以清除history
 (defun moedict-history-clear ()
+  "Clear all history of moedict."
   (interactive)
-  (setq moedict-history nil))
+  (setq moedict-history nil)
+  (setq moedict-history-n 0))
 
 
 (defvar moedict-use-curl nil
@@ -133,11 +135,7 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
   "Face for syn/antonyms-tag. ex: [同]"
   :group 'moedict)
 
-
-
-;; =================================================================
-;; defface結束
-;; =======================================================Face for defface結束)
+;; ===========================================================
 
 (defun moedict-lookup ()
   "Look up Chinese vocabulary with moedict."
