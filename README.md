@@ -30,6 +30,8 @@ If you're using Un*x-like OS and `curl` is available on your system, we suggest 
 ## Key-binding
 If under *moedict* buffer:
 
+| Key     | Command                    |
+|---------|----------------------------|
 | l       | `moedict-lookup`           |
 | r       | `moedict-lookup-region`    |
 | C-c C-b | `moedict-backward-history` |
