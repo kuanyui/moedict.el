@@ -1,9 +1,9 @@
 (require 'json)
 (require 'url)
-;; [FIXME] 如果找不到該詞，就不要刷新temp-buffer
+;; 加上key-binding h moedict-help，跳出幫助視窗temp-buffer
 ;; [wish-list] history
-;; [add]使用curl
-;; 該如何判斷GnuTLS -19 error出現？且出現的話重試？
+
+;; 該如何判斷GnuTLS -19 error出現？且出現的話重試？（懶得鳥你，用curl了）
 ;;
 ;;(defun moedict-retrieve-json (word)
 ;;  "Get JSON and return the parsed list of the word."
@@ -50,37 +50,6 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
   "Major mode for looking up Chinese vocabulary via Moedict API."
   :prefix "moedict-"
   :link '(url-link "http://github.com/kuanyui/moedict.el"))
-
-(defun moedict-lookup ()
-  (interactive)
-  (let* ((user-input (read-from-minibuffer "萌典："))
-        (parsed-finale (moedict-run-parser (format "%s" user-input))))
-    (if (equal parsed-finale 'failed)
-        (message "查詢失敗，可能無此字詞。")
-        (with-temp-buffer-window "*moedict*" nil nil
-                                 (let (buffer-read-only)
-                                   (insert parsed-finale))
-                                 (moedict-mode)))
-    (if (not (equal (buffer-name) "*moedict*"))
-        (switch-to-buffer-other-window "*moedict*"))))
-
-(defun moedict-lookup-region (begin end)
-  (interactive "r")
-  (if (region-active-p)
-      (if (equal parsed-finale 'failed)
-        (message "查詢失敗，可能無此字詞。")
-        (let* ((user-input (format "%s" (buffer-substring-no-properties begin end))))
-          (with-temp-buffer-window "*moedict*" nil nil
-                                   (let (buffer-read-only)
-                                     (insert (moedict-run-parser user-input)))
-                                   (moedict-mode))
-          (if (not (equal (buffer-name) "*moedict*"))
-              (switch-to-buffer-other-window "*moedict*"))))
-    (let* ((mark-even-if-inactive t))
-      (set-mark-command nil)
-      (message "Run `moedict-lookup-region' again to finish."))))
-;; [FIXME] 自動改變按鍵指示
-
 
 (defgroup moedict-faces nil
   "Faces used in Moedict-mode"
@@ -168,12 +137,46 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
 ;; defface結束
 ;; =======================================================Face for defface結束)
 
+(defun moedict-lookup ()
+  "Look up Chinese vocabulary with moedict."
+  (interactive)
+  (let* ((user-input (read-from-minibuffer "萌典："))
+        (parsed-finale (moedict-run-parser (format "%s" user-input))))
+    (if (equal parsed-finale 'failed)
+        (message "查詢失敗，可能無此字詞。")
+        (with-temp-buffer-window "*moedict*" nil nil
+                                 (let (buffer-read-only)
+                                   (insert parsed-finale))
+                                 (moedict-mode)))
+    (if (not (equal (buffer-name) "*moedict*"))
+        (switch-to-buffer-other-window "*moedict*"))))
+;; [FIXME] 加上沒有網路時的curl錯誤訊息判斷？「Could not resolve host」
+
+(defun moedict-lookup-region (begin end)
+  (interactive "r")
+  (if (region-active-p)
+      (let* ((region-input (format "%s" (buffer-substring-no-properties begin end)))
+             (parsed-finale (moedict-run-parser region-input)))
+        (if (equal parsed-finale 'failed)
+            (message "查詢失敗，可能無此字詞。")
+          (progn
+            (with-temp-buffer-window "*moedict*" nil nil
+                                     (let (buffer-read-only)
+                                       (insert parsed-finale))
+                                     (moedict-mode))
+            (if (not (equal (buffer-name) "*moedict*"))
+                (switch-to-buffer-other-window "*moedict*")))))
+        (let* ((mark-even-if-inactive t))
+          (set-mark-command nil)
+          (message "Run `moedict-lookup-region' again to finish."))))
+;; [FIXME] 自動改變按鍵指示
+
+
 (defun moedict-retrieve-json (word)
   "Get JSON and return the parsed list of the word.
 When variable `moedict-use-curl' is t or non-nil, call shell command `curl'
 instead of `url.el' to avoid some strang error when fetching json data."
-  (let (JSON-DATA)
-    (if (null moedict-use-curl)
+    (if (null moedict-use-curl)         ;判斷是否使用curl
         (with-current-buffer
             (url-retrieve-synchronously
              (format "https://www.moedict.tw/uni/%s.json" word))
@@ -183,23 +186,19 @@ instead of `url.el' to avoid some strang error when fetching json data."
             (progn
               (re-search-backward "\n\n")
               (delete-region (point-min) (point))
-              (setq JSON-DATA (buffer-string)))))
-    (setq JSON-DATA
-     (shell-command-to-string
-      (format "curl https://www.moedict.tw/uni/%s.json 2>/dev/null" word)))
-    (json-read-from-string JSON-DATA))))
-
-
+              (json-read-from-string (buffer-string)))))
+    (let (JSON-DATA)
+      (setq JSON-DATA
+            (shell-command-to-string
+             (format "curl https://www.moedict.tw/uni/%s.json 2>/dev/null" word)))
+      (if (string-match "404 Not Found" JSON-DATA)
+          'failed
+        (json-read-from-string JSON-DATA)))))
 
 (defun vector-to-list (input)
   "A tools to covert vector to list, hence `dolist' available.
 e.g. [a b c] => (a b c)"
   (mapcar (lambda (x) x) input))
-
-;;  (with-output-to-temp-buffer)
-;;  (with-temp-buffer-window)
-;;  (switch-to-buffer)
-;;  (set-buffer)
 
 (defun moedict-run-parser (word)
   "透過 moedict-retrieve-json* 抓出資料後，此function開始處理這堆玩意。"
