@@ -116,7 +116,7 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
   '((((class color) (background light))
      (:foreground "#ff8700" :bold t :height 1.2))
     (((class color) (background dark))
-     (:foreground "#d7ee87" :bold t :height 1.2)))
+     (:foreground "#ffa722" :bold t :height 1.2)))
   "Face for title. ex:"
   :group 'moedict-faces)
 
@@ -124,15 +124,15 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
   '((((class color) (background light))
      (:foreground "#787878"))
     (((class color) (background dark))
-     (:foreground "#eeeeee")))
+     (:foreground "#c1c1c1")))
   "Face for stroke-count."
   :group 'moedict-faces)
 
 (defface moedict-radical
   '((((class color) (background light))
-     (:foreground "#ffffff" :background "#787878"))
+     (:foreground "#ffffff" :background "#a40000"))
     (((class color) (background dark))
-     (:foreground "#787878" :background "#eeeeee")))
+     (:foreground "#ffffff" :background "#a40000")))
   "Face for character's radical."
   :group 'moedict-faces)
 
@@ -148,7 +148,7 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
   '((((class color) (background light))
      (:foreground "#008700" :background "#d7ff87"))
     (((class color) (background dark))
-     (:foreground "#ff8700" :background "#565656")))
+     (:foreground "#a1db00" :background "#5a5a5a")))
   "Face for bopomofo （注音符號）."
   :group 'moedict-faces)
 
@@ -172,7 +172,7 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
   '((((class color) (background light))
      (:foreground "#ffffd7" :background "#525252"))
     (((class color) (background dark))
-     (:foreground "#525252" :background "#ffffff")))
+     (:foreground "#525252" :background "#c1c1c1")))
   "Face for type. ex: [動]、[名]"
   :group 'moedict-faces)
 
@@ -188,7 +188,7 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
   '((((class color) (background light))
      (:foreground "#1f5bff"))
     (((class color) (background dark))
-     (:foreground "#8fccff")))
+     (:foreground "#6faaff")))
   "Face for definitions."
   :group 'moedict-faces)
 
@@ -196,15 +196,15 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
   '((((class color) (background light))
      (:foreground "#525252"))
     (((class color) (background dark))
-     (:foreground "#eeeeee")))
+     (:foreground "#cdcdcd")))
   "Face for example. ex: Example"
   :group 'moedict)
 
 (defface moedict-link
   '((((class color) (background light))
-     (:foreground "#00d7af"))
+     (:foreground "#00c79f"))
     (((class color) (background dark))
-     (:foreground "#74ffcf")))
+     (:foreground "#00d7af")))
   "Face for link. ex:「見...等條」"
   :group 'moedict)
 
@@ -228,7 +228,7 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
   '((((class color) (background light))
      (:foreground "#ffffff" :background "#9a08ff"))
     (((class color) (background dark))
-     (:foreground "#9a08ff" :background "#eeaeff")))
+     (:foreground "#7008a0" :background "#eeaeff")))
   "Face for syn/antonyms-tag. ex: [同]"
   :group 'moedict)
 
