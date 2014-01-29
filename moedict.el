@@ -152,6 +152,7 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
                                ;; 每次有新查詢就把forward的資料清空，只留下cdr
                                (setq moedict-history
                                      (nthcdr moedict-history-n moedict-history))
+                               (setq moedict-history-n 0)
                                (push parsed-finale moedict-history)
                                (let (buffer-read-only)
                                  (insert parsed-finale))))
@@ -172,6 +173,7 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
                                          (moedict-mode))
                                      (setq moedict-history
                                            (nthcdr moedict-history-n moedict-history))
+                                     (setq moedict-history-n 0)
                                      (push parsed-finale moedict-history)
                                      (let (buffer-read-only)
                                        (insert parsed-finale)))
@@ -192,7 +194,9 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
       (let (buffer-read-only)         ;Unlock buffer-read-only
         (delete-region (point-min) (point-max))
         (setq moedict-history-n (1+ moedict-history-n))
-        (insert (nth moedict-history-n moedict-history))))))
+        (insert (nth moedict-history-n moedict-history))
+        (beginning-of-buffer)
+        (message "Backward!")))))
 
 (defun moedict-forward-history ()
   (interactive)
@@ -203,7 +207,9 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
       (let (buffer-read-only)
         (delete-region (point-min) (point-max))
         (setq moedict-history-n (1- moedict-history-n))
-        (insert (nth moedict-history-n moedict-history))))))
+        (insert (nth moedict-history-n moedict-history))
+        (beginning-of-buffer)
+        (message "Forward!")))))
 
 (defun moedict-retrieve-json (word)
   "Get JSON and return the parsed list of the word.
