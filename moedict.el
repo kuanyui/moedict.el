@@ -5,18 +5,6 @@
 
 ;; 該如何判斷GnuTLS -19 error出現？且出現的話重試？（懶得鳥你，用curl了）
 ;;
-;;(defun moedict-retrieve-json (word)
-;;  "Get JSON and return the parsed list of the word."
-;;    (with-current-buffer
-;;  (let ((url-request-method "GET")
-;;        (url-request-extra-headers '(("Content-Type" . "application/x-www-form-urlencoded"))))
-;;    (url-retrieve-synchronously
-;;     (format "https://www.moedict.tw/uni/%s.json" word))
-;;    (set-buffer-multibyte t)
-;;    (re-search-backward "\n\n")
-;;    (delete-region (point-min) (point))
-;;    (json-read-from-string (buffer-string)))))
-  ;; 上面沒問題了不要再改了
 
 (defcustom moedict-mode-hook nil
   "Normal hook run when entering moedict-mode."
@@ -29,6 +17,8 @@
     (define-key map (kbd "q") 'quit-window)
     (define-key map (kbd "l") 'moedict-lookup)
     (define-key map (kbd "r") 'moedict-lookup-region)
+    (define-key map (kbd "C-c C-b") 'moedict-backward-history)
+    (define-key map (kbd "C-c C-f") 'moedict-forward-history)
     map)
   "Keymap for Moedict major mode.")
 
@@ -38,7 +28,7 @@ If nil, use `url.el' to do this.
 
 If `curl` installed on your system, it's recommended to setq this to t,
 because `url-retrieve' occurs GnuTLS error very often in our some testing.")
-
+(setq moedict-use-curl t)
 ;; (defvar moedict-lookup-ring nil
 ;;   "History of moedict-lookup.")
 
@@ -144,10 +134,20 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
         (parsed-finale (moedict-run-parser (format "%s" user-input))))
     (if (equal parsed-finale 'failed)
         (message "查詢失敗，可能無此字詞。")
-        (with-temp-buffer-window "*moedict*" nil nil
-                                 (let (buffer-read-only)
-                                   (insert parsed-finale))
-                                 (moedict-mode)))
+      (with-temp-buffer-window "*moedict*" nil nil
+                               ;; History的格式（數字為moedict-history-n、即nthcdr所用的值）：
+                               ;; ("最新0" "1" "2" "3" ...)
+                               (defvar-local moedict-history '()
+                                 "History list of current moedict buffer.")
+                               (defvar-local moedict-history-n 0
+                                 "Record current position in moedict history list")
+                               ;; 每次有新查詢就把forward的資料清空，只留下cdr
+                               (setq moedict-history
+                                     (nthcdr moedict-history-n moedict-history))
+                               (push parsed-finale moedict-history)
+                               (let (buffer-read-only)
+                                 (insert parsed-finale))
+                               (moedict-mode)))
     (if (not (equal (buffer-name) "*moedict*"))
         (switch-to-buffer-other-window "*moedict*"))))
 ;; [FIXME] 加上沒有網路時的curl錯誤訊息判斷？「Could not resolve host」
@@ -161,16 +161,44 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
             (message "查詢失敗，可能無此字詞。")
           (progn
             (with-temp-buffer-window "*moedict*" nil nil
-                                     (let (buffer-read-only)
-                                       (insert parsed-finale))
+                                     (defvar-local moedict-history '()
+                                       "History list of current moedict buffer.")
+                                     (defvar-local moedict-history-n 0
+                                       "Record current position in moedict history list")
+                                     (setq moedict-history
+                                           (nthcdr moedict-history-n moedict-history))
+                                     (push parsed-finale moedict-history)
+                                     (insert parsed-finale)
                                      (moedict-mode))
             (if (not (equal (buffer-name) "*moedict*"))
                 (switch-to-buffer-other-window "*moedict*")))))
-        (let* ((mark-even-if-inactive t))
+        (let ((mark-even-if-inactive t))
           (set-mark-command nil)
-          (message "Run `moedict-lookup-region' again to finish."))))
+          (message "Move cursor to select a region and run `moedict-lookup-region' again to finish."))))
 ;; [FIXME] 自動改變按鍵指示
 
+(defun moedict-backward-history ()
+  (interactive)
+  (if (not (equal (buffer-name) "*moedict*"))
+      (message "Please run this command in *moedict* buffer.")
+    (if (or (equal (length moedict-history) (+ moedict-history-n 1))
+            (<= (length moedict-history) 1))
+        (message "There's no older item in history.")
+      (let (buffer-read-only)         ;Unlock buffer-read-only
+        (delete-region (point-min) (point-max))
+        (setq moedict-history-n (1+ moedict-history-n))
+        (insert (nth moedict-history-n moedict-history))))))
+
+(defun moedict-forward-history ()
+  (interactive)
+  (if (not (equal (buffer-name) "*moedict*"))
+      (message "Please run this command in *moedict* buffer.")
+    (if (<= moedict-history-n 0)
+        (message "There's no newer item in history.")
+      (let (buffer-read-only)
+        (delete-region (point-min) (point-max))
+        (setq moedict-history-n (1- moedict-history-n))
+        (insert (nth moedict-history-n moedict-history))))))
 
 (defun moedict-retrieve-json (word)
   "Get JSON and return the parsed list of the word.
