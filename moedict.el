@@ -202,7 +202,7 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
 
 (defface moedict-link
   '((((class color) (background light))
-     (:foreground "#00c79f"))
+     (:foreground "#00a775"))
     (((class color) (background dark))
      (:foreground "#00d7af")))
   "Face for link. ex:「見...等條」"
