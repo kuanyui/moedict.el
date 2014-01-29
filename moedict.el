@@ -60,23 +60,25 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
         (with-temp-buffer-window "*moedict*" nil nil
                                  (let (buffer-read-only)
                                    (insert parsed-finale))
-                                 (moedict-mode)
-                                 (if (not (equal (buffer-name) "*moedict*"))
-                                     (switch-to-buffer-other-window "*moedict*"))))))
+                                 (moedict-mode)))
+    (if (not (equal (buffer-name) "*moedict*"))
+        (switch-to-buffer-other-window "*moedict*"))))
 
 (defun moedict-lookup-region (begin end)
   (interactive "r")
   (if (region-active-p)
-      (let* ((user-input (format "%s" (buffer-substring-no-properties begin end))))
-        (with-temp-buffer-window "*moedict*" nil nil
-                                 (let (buffer-read-only)
-                                   (insert (moedict-run-parser user-input)))
-                                 (moedict-mode)
-                                 (if (not (equal (buffer-name) "*moedict*"))
-                                     (switch-to-buffer-other-window "*moedict*"))))
+      (if (equal parsed-finale 'failed)
+        (message "查詢失敗，可能無此字詞。")
+        (let* ((user-input (format "%s" (buffer-substring-no-properties begin end))))
+          (with-temp-buffer-window "*moedict*" nil nil
+                                   (let (buffer-read-only)
+                                     (insert (moedict-run-parser user-input)))
+                                   (moedict-mode))
+          (if (not (equal (buffer-name) "*moedict*"))
+              (switch-to-buffer-other-window "*moedict*"))))
     (let* ((mark-even-if-inactive t))
       (set-mark-command nil)
-      (message "r again to finish."))))
+      (message "Run `moedict-lookup-region' again to finish."))))
 ;; [FIXME] 自動改變按鍵指示
 
 
