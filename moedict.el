@@ -114,17 +114,17 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
 
 (defface moedict-title
   '((((class color) (background light))
-     (:foreground "#ff8700" :background nil :bold t :height 1.2))
+     (:foreground "#ff8700" :bold t :height 1.2))
     (((class color) (background dark))
-     (:foreground "#d7ee87" :background nil :bold t :height 1.2)))
+     (:foreground "#d7ee87" :bold t :height 1.2)))
   "Face for title. ex:"
   :group 'moedict-faces)
 
 (defface moedict-stroke-count
   '((((class color) (background light))
-     (:foreground "#787878" :background nil))
+     (:foreground "#787878"))
     (((class color) (background dark))
-     (:foreground "#eeeeee" :background nil)))
+     (:foreground "#eeeeee")))
   "Face for stroke-count."
   :group 'moedict-faces)
 
@@ -178,49 +178,49 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
 
 (defface moedict-quote
   '((((class color) (background light))
-     (:foreground "#ff4ea3" :background nil :slant italic))
+     (:foreground "#ff4ea3" :slant italic))
     (((class color) (background dark))
-     (:foreground "#ff6fa5" :background nil :slant italic)))
+     (:foreground "#ff6fa5" :slant italic)))
   "Face for quote."
   :group 'moedict-faces)
 
 (defface moedict-def
   '((((class color) (background light))
-     (:foreground "#1f5bff" :background nil))
+     (:foreground "#1f5bff"))
     (((class color) (background dark))
-     (:foreground "#8fccff" :background nil)))
+     (:foreground "#8fccff")))
   "Face for definitions."
   :group 'moedict-faces)
 
 (defface moedict-example
   '((((class color) (background light))
-     (:foreground "#525252" :background nil))
+     (:foreground "#525252"))
     (((class color) (background dark))
-     (:foreground "#eeeeee" :background nil)))
+     (:foreground "#eeeeee")))
   "Face for example. ex: Example"
   :group 'moedict)
 
 (defface moedict-link
   '((((class color) (background light))
-     (:foreground "#00d7af" :background nil))
+     (:foreground "#00d7af"))
     (((class color) (background dark))
-     (:foreground "#74ffcf" :background nil)))
+     (:foreground "#74ffcf")))
   "Face for link. ex:「見...等條」"
   :group 'moedict)
 
 (defface moedict-synonyms
   '((((class color) (background light))
-     (:foreground "#9a08ff" :background nil))
+     (:foreground "#9a08ff"))
     (((class color) (background dark))
-     (:foreground "#aa71ff" :background nil)))
+     (:foreground "#aa71ff")))
   "Face for synonyms."
   :group 'moedict)
 
 (defface moedict-antonyms
   '((((class color) (background light))
-     (:foreground "#9a08ff" :background nil))
+     (:foreground "#9a08ff"))
     (((class color) (background dark))
-     (:foreground "#aa71ff" :background nil)))
+     (:foreground "#aa71ff")))
   "Face for antonyms."
   :group 'moedict)
 
