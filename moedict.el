@@ -22,6 +22,18 @@
     map)
   "Keymap for Moedict major mode.")
 
+;; History格式（數字為moedict-history-n、即nthcdr所用的值）：
+;; ("最新0" "1" "2" "3" ...)
+(defvar moedict-history nil
+  "History list of current moedict buffer.")
+(defvar moedict-history-n 0
+  "Record current position in moedict history list")
+;; [FIXME] 以上兩者應該改成*moedict*內的local variable，但我做不出來，好像每次 (with-temp-buffer-window ...)都會改掉local variable.暫時先定義一個function讓人可以清除history
+(defun moedict-history-clear ()
+  (interactive)
+  (setq moedict-history nil))
+
+
 (defvar moedict-use-curl nil
   "If non-nil, call shell command `curl` to fetch json data.
 If nil, use `url.el' to do this.
@@ -135,13 +147,8 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
     (if (equal parsed-finale 'failed)
         (message "查詢失敗，可能無此字詞。")
       (with-temp-buffer-window "*moedict*" nil nil
-                               (moedict-mode)
-                               ;; History格式（數字為moedict-history-n、即nthcdr所用的值）：
-                               ;; ("最新0" "1" "2" "3" ...)
-                               (defvar-local moedict-history nil
-                                 "History list of current moedict buffer.")
-                               (defvar-local moedict-history-n 0
-                                 "Record current position in moedict history list")
+                               (if (not (equal major-mode 'moedict-mode))
+                                   (moedict-mode))
                                ;; 每次有新查詢就把forward的資料清空，只留下cdr
                                (setq moedict-history
                                      (nthcdr moedict-history-n moedict-history))
@@ -161,13 +168,10 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
             (message "查詢失敗，可能無此字詞。")
           (progn
             (with-temp-buffer-window "*moedict*" nil nil
-                                     (moedict-mode)
-                                     (defvar-local moedict-history nil
-                                       "History list of current moedict buffer.")
-                                     (defvar-local moedict-history-n 0
-                                       "Record current position in moedict history list")
-;;                                     (setq moedict-history
-;;                                           (nthcdr moedict-history-n moedict-history))
+                                     (if (not (equal major-mode 'moedict-mode))
+                                         (moedict-mode))
+                                     (setq moedict-history
+                                           (nthcdr moedict-history-n moedict-history))
                                      (push parsed-finale moedict-history)
                                      (let (buffer-read-only)
                                        (insert parsed-finale)))
@@ -182,7 +186,7 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
   (interactive)
   (if (not (equal (buffer-name) "*moedict*"))
       (message "Please run this command in *moedict* buffer.")
-    (if (or (equal (length moedict-history) (+ moedict-history-n 1))
+    (if (or (equal (length moedict-history) (1+ moedict-history-n))
             (<= (length moedict-history) 1))
         (message "There's no older item in history.")
       (let (buffer-read-only)         ;Unlock buffer-read-only
@@ -205,7 +209,7 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
   "Get JSON and return the parsed list of the word.
 When variable `moedict-use-curl' is t or non-nil, call shell command `curl'
 instead of `url.el' to avoid some strang error when fetching json data."
-    (if (null moedict-use-curl)         ;判斷是否使用curl
+    (if (null moedict-use-curl)         ;判斷是否使用curl，nil為不使用
         (with-current-buffer
             (url-retrieve-synchronously
              (format "https://www.moedict.tw/uni/%s.json" word))
