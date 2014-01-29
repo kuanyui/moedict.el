@@ -1,8 +1,5 @@
 (require 'json)
 (require 'url)
-;; 加上key-binding h moedict-help，跳出幫助視窗temp-buffer
-;; [wish-list] history
-
 ;; 該如何判斷GnuTLS -19 error出現？且出現的話重試？（懶得鳥你，用curl了）
 ;;
 
@@ -15,10 +12,12 @@
   (let ((map (make-sparse-keymap)))
     ;; Element insertion
     (define-key map (kbd "q") 'quit-window)
+    (define-key map (kbd "h") 'describe-mode)
     (define-key map (kbd "l") 'moedict-lookup)
     (define-key map (kbd "r") 'moedict-lookup-region)
     (define-key map (kbd "C-c C-b") 'moedict-backward-history)
     (define-key map (kbd "C-c C-f") 'moedict-forward-history)
+    (define-key map (kbd "C-c D") 'moedict-clear-history)
     map)
   "Keymap for Moedict major mode.")
 
@@ -29,11 +28,15 @@
 (defvar moedict-history-n 0
   "Record current position in moedict history list")
 ;; [FIXME] 以上兩者應該改成*moedict*內的local variable，但我做不出來，好像每次 (with-temp-buffer-window ...)都會改掉local variable.暫時先定義一個function讓人可以清除history
-(defun moedict-history-clear ()
+(defun moedict-clear-history ()
   "Clear all history of moedict."
   (interactive)
-  (setq moedict-history nil)
-  (setq moedict-history-n 0))
+  (if (yes-or-no-p "Really clear all history?")
+      (progn
+        (setq moedict-history nil)
+        (setq moedict-history-n 0)
+        (message "Done."))
+    (message "Canceled.")))
 
 
 (defvar moedict-use-curl nil
@@ -346,4 +349,4 @@ e.g. [a b c] => (a b c)"
     (when (setq link (cdr (assoc 'link definition)))
       (dolist (x (vector-to-list link))
         (put-text-property 0 (length x) 'face 'moedict-link x)
-        (setq DEFINITIONS (format "%s     %s" DEFINITIONS x))))))
+        (setq DEFINITIONS (format "%s\n            %s" DEFINITIONS x))))))
