@@ -1,6 +1,10 @@
 (require 'json)
 (require 'url)
-
+;; [FIXME] 如果找不到該詞，就不要刷新temp-buffer
+;; [wish-list] history
+;; [add]使用curl
+;; 該如何判斷GnuTLS -19 error出現？且出現的話重試？
+;;
 ;;(defun moedict-retrieve-json (word)
 ;;  "Get JSON and return the parsed list of the word."
 ;;    (with-current-buffer
@@ -17,7 +21,7 @@
 (defcustom moedict-mode-hook nil
   "Normal hook run when entering moedict-mode."
   :type 'hook
-  :group nil)
+  :group 'moedict)
 
 (defvar moedict-mode-map
   (let ((map (make-sparse-keymap)))
@@ -27,6 +31,13 @@
     (define-key map (kbd "r") 'moedict-lookup-region)
     map)
   "Keymap for Moedict major mode.")
+
+(defvar moedict-use-curl nil
+  "If non-nil, call shell command `curl` to fetch json data.
+If nil, use `url.el' to do this.
+
+If `curl` installed on your system, it's recommended to setq this to t,
+because `url-retrieve' occurs GnuTLS error very often in our some testing.")
 
 ;; (defvar moedict-lookup-ring nil
 ;;   "History of moedict-lookup.")
@@ -42,14 +53,16 @@
 
 (defun moedict-lookup ()
   (interactive)
-  (let ((user-input (read-from-minibuffer "萌典：")))
-    (if (stringp user-input)
+  (let* ((user-input (read-from-minibuffer "萌典："))
+        (parsed-finale (moedict-run-parser (format "%s" user-input))))
+    (if (equal parsed-finale 'failed)
+        (message "查詢失敗，可能無此字詞。")
         (with-temp-buffer-window "*moedict*" nil nil
                                  (let (buffer-read-only)
-                                   (insert (moedict-run-parser user-input)))
+                                   (insert parsed-finale))
                                  (moedict-mode)
-                                 (switch-to-buffer-other-window "*moedict*"))
-      (message "Input should be a string."))))
+                                 (if (not (equal (buffer-name) "*moedict*"))
+                                     (switch-to-buffer-other-window "*moedict*"))))))
 
 (defun moedict-lookup-region (begin end)
   (interactive "r")
@@ -58,10 +71,14 @@
         (with-temp-buffer-window "*moedict*" nil nil
                                  (let (buffer-read-only)
                                    (insert (moedict-run-parser user-input)))
-                                 (moedict-mode)))
+                                 (moedict-mode)
+                                 (if (not (equal (buffer-name) "*moedict*"))
+                                     (switch-to-buffer-other-window "*moedict*"))))
     (let* ((mark-even-if-inactive t))
       (set-mark-command nil)
       (message "r again to finish."))))
+;; [FIXME] 自動改變按鍵指示
+
 
 (defgroup moedict-faces nil
   "Faces used in Moedict-mode"
@@ -148,17 +165,29 @@
 ;; =================================================================
 ;; defface結束
 ;; =======================================================Face for defface結束)
-(require 'url)
 
 (defun moedict-retrieve-json (word)
-  "Get JSON and return the parsed list of the word."
-  (with-current-buffer
-      (url-retrieve-synchronously
-       (format "https://www.moedict.tw/uni/%s.json" word))
-    (set-buffer-multibyte t)
-    (re-search-backward "\n\n")
-    (delete-region (point-min) (point))
-    (json-read-from-string (buffer-string))))
+  "Get JSON and return the parsed list of the word.
+When variable `moedict-use-curl' is t or non-nil, call shell command `curl'
+instead of `url.el' to avoid some strang error when fetching json data."
+  (let (JSON-DATA)
+    (if (null moedict-use-curl)
+        (with-current-buffer
+            (url-retrieve-synchronously
+             (format "https://www.moedict.tw/uni/%s.json" word))
+          (set-buffer-multibyte t)
+          (if (string-match "404 Not Found" (buffer-string))
+              'failed
+            (progn
+              (re-search-backward "\n\n")
+              (delete-region (point-min) (point))
+              (setq JSON-DATA (buffer-string)))))
+    (setq JSON-DATA
+     (shell-command-to-string
+      (format "curl https://www.moedict.tw/uni/%s.json 2>/dev/null" word)))
+    (json-read-from-string JSON-DATA))))
+
+
 
 (defun vector-to-list (input)
   "A tools to covert vector to list, hence `dolist' available.
@@ -171,15 +200,19 @@ e.g. [a b c] => (a b c)"
 ;;  (set-buffer)
 
 (defun moedict-run-parser (word)
-  "目前暫時會insert，要不要改成不會insert?已改掉。"
-  (let (FINALE)
-    (moedict-run-title (moedict-retrieve-json word))
-;;    (moedict-run-title word)            ;測試用，用variable
-    (let (buffer-read-only)
-      (format "%s" FINALE))))
+  "透過 moedict-retrieve-json* 抓出資料後，此function開始處理這堆玩意。"
+  (let (FINALE JSON-DATA)
+    (setq JSON-DATA (moedict-retrieve-json word))
+    (if (equal JSON-DATA 'failed)
+        'failed
+      (progn
+        (moedict-run-title JSON-DATA)
+        (let (buffer-read-only)
+          (format "%s" FINALE))))))
 
 (defun moedict-run-title (parsed-json)
-  ""
+  "Do not use this seperately.
+處理title、radical + stroke-count，然後把 heteronyms 送給 moedict-run-heteronyms"
   (let (title radical stroke_count non_radical_stroke_count heteronyms)
     (when (setq title (cdr (assoc 'title parsed-json)))
       (progn (put-text-property 0 (length title) 'face 'moedict-title title)))
@@ -200,14 +233,16 @@ e.g. [a b c] => (a b c)"
                                         (moedict-run-heteronyms heteronyms)))))))
 
 (defun moedict-run-heteronyms (heteronyms)
-  "輸入為heteronyms的cdr (形式是vector)。此function會把vector轉換成list後，用dolist一項項送給moedict-run-heteronym"
+  "Do not use this seperately.
+輸入為heteronyms的cdr (形式是vector)。此function會把vector轉換成list後，用dolist一項項送給moedict-run-heteronym"
   (let (HETERONYMS)
       (dolist (x (vector-to-list heteronyms))
         (moedict-run-heteronym x))
       (format "%s" HETERONYMS)))
 
 (defun moedict-run-heteronym (heteronym)
-  "輸入為heteronyms的cdr中的小項目（單個heteronym），為list，如((pinyin . liao) (definitions . ...))
+  "Do not use this seperately.
+輸入為heteronyms的cdr中的小項目（單個heteronym），為list，如((pinyin . liao) (definitions . ...))
 因為輸出存在 HETERONYMS，請透過moedict-run-heteronyms來呼叫此function"
   (let (bopomofo pinyin bopomofo2 HETERONYM)
     (setq HETERONYM (format "%s" (concat HETERONYM title))) ;;總之先加上title
@@ -226,14 +261,16 @@ e.g. [a b c] => (a b c)"
     (setq HETERONYMS (format "%s" (concat HETERONYMS HETERONYM)))))
 
 (defun moedict-run-definitions (definitions)
-  "輸入為vector(definitions的cdr)。此function會把vector轉換成list後，用 dolist 一項項送給 moedict-run-definition"
+  "Do not use this seperately.
+輸入為vector(definitions的cdr)。此function會把vector轉換成list後，用 dolist 一項項送給 moedict-run-definition，最後得到的結果全部存到 DEFINITIONS 集合起來"
   (let (DEFINITIONS last-type) ;DEFINITIONS是用來存整個definitions的cdr的最後輸出
     (dolist (x (vector-to-list definitions))
       (moedict-run-definition x))
     (format "%s" DEFINITIONS)))
 
 (defun moedict-run-definition (definition)
-  "輸入需為一個list，如:((type . \"名\") (def . \"羊\"))"
+  "Do not use this seperately.
+輸入需為一個list，如:((type . \"名\") (def . \"羊\"))"
   (let (type def example quote synonyms antonyms link)
   ;; 如果type跟上個(last-type)重複，就不要再次插入type
     (when (setq type (cdr (assoc 'type definition)))
