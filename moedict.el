@@ -1,3 +1,51 @@
+;;; moedict.el --- Looking up Chinese vocabulary via moedict API.
+
+;; Author: kuanyui <azazabc123@gmail.com>
+;; URL: https://github.com/kuanyui/moedict.el
+;; Created: 20140130
+;; Keywords: dictionary
+;; Compatibility: Emacs 24.3 and above
+
+;; This file is NOT part of GNU Emacs
+
+;;; License:
+
+;; BSD License.
+
+;;; Commentary:
+
+;; Moedict-mode is a major mode for looking up Traditional Chinese
+;; vocabulary in Emacs via moedict API (萌典, http://moedict.tw/).
+
+;; == Installation ==
+;;
+;;       (add-to-list 'load-path "~/path/to/moedict/")
+;;       (require 'moedict)
+;;       (global-set-key (kbd "C-c m l") 'moedict-lookup)
+;;       (global-set-key (kbd "C-c m r") 'moedict-lookup-region)
+;;
+;; If you use Un*x-like OS and `curl` is available, we suggest using
+;; it instead of `url.el' to avoid some strange GnuTLS problems:
+;;
+;;       (setq moedict-use-curl t)
+;;
+;; == Usage ==
+;;
+;; `moedict-lookup': Look up vocabulary via minibuffer.
+;; `moedict-lookup-region': Look up vocabulary under the selected region.
+;;
+;; If under *moedict* buffer:
+;;
+;; l         `moedict-lookup'
+;; r         `moedict-lookup-region'
+;; C-c C-b   `moedict-backward-history'
+;; C-c C-f   `moedict-forward-history'
+;; C-c D     `moedict-clear-history'
+;; q         Close/bury the buffer.
+;; h         Display help.
+
+;;; Code:
+
 (require 'json)
 (require 'url)
 ;; 該如何判斷GnuTLS -19 error出現？且出現的話重試？（懶得鳥你，用curl了）
@@ -241,7 +289,7 @@ e.g. [a b c] => (a b c)"
   (mapcar (lambda (x) x) input))
 
 (defun moedict-run-parser (word)
-  "透過 moedict-retrieve-json* 抓出資料後，此function開始處理這堆玩意。"
+  "透過 moedict-retrieve-json 抓出資料後，此function開始處理這堆玩意。"
   (let (FINALE JSON-DATA)
     (setq JSON-DATA (moedict-retrieve-json word))
     (if (equal JSON-DATA 'failed)
@@ -350,3 +398,5 @@ e.g. [a b c] => (a b c)"
       (dolist (x (vector-to-list link))
         (put-text-property 0 (length x) 'face 'moedict-link x)
         (setq DEFINITIONS (format "%s\n            %s" DEFINITIONS x))))))
+
+(provide 'moedict)
