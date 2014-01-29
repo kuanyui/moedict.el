@@ -14,6 +14,9 @@
 
 ;;; Commentary:
 
+;; Screenshot and more information:
+;;     http://github.com/kuanyui/moedict.el
+;;
 ;; Moedict-mode is a major mode for looking up Traditional Chinese
 ;; vocabulary in Emacs via moedict API (萌典, http://moedict.tw/).
 
@@ -94,8 +97,6 @@ If nil, use `url.el' to do this.
 If `curl` installed on your system, it's recommended to setq this to t,
 because `url-retrieve' occurs GnuTLS error very often in our some testing.")
 (setq moedict-use-curl t)
-;; (defvar moedict-lookup-ring nil
-;;   "History of moedict-lookup.")
 
 (define-derived-mode moedict-mode nil "MoeDict"
   "Major mode for looking up Chinese vocabulary via Moedict API."
@@ -112,77 +113,122 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
   :group 'faces)
 
 (defface moedict-title
-  '((((class color)) (:foreground "#ff8700" :background nil :bold t)))
+  '((((class color) (background light))
+     (:foreground "#ff8700" :background nil :bold t :height 1.2))
+    (((class color) (background dark))
+     (:foreground "#d7ee87" :background nil :bold t :height 1.2)))
   "Face for title. ex:"
   :group 'moedict-faces)
 
 (defface moedict-stroke-count
-  '((((class color)) (:foreground "#787878" :background nil)))
+  '((((class color) (background light))
+     (:foreground "#787878" :background nil))
+    (((class color) (background dark))
+     (:foreground "#eeeeee" :background nil)))
   "Face for stroke-count."
   :group 'moedict-faces)
 
 (defface moedict-radical
-  '((((class color)) (:foreground "#ffffff" :background "#787878")))
+  '((((class color) (background light))
+     (:foreground "#ffffff" :background "#787878"))
+    (((class color) (background dark))
+     (:foreground "#787878" :background "#eeeeee")))
   "Face for character's radical."
   :group 'moedict-faces)
 
 (defface moedict-non-radical-stroke-count
-  '((((class color)) (:inherit moedict-stroke-count)))
+  '((((class color) (background light))
+     (:inherit moedict-stroke-count))
+    (((class color) (background dark))
+     (:inherit moedict-stroke-count)))
   "Face for non-radical stroke-count."
   :group 'moedict-faces)
 
 (defface moedict-bopomofo
-  '((((class color)) (:foreground "#008700" :background "#d7ff87")))
+  '((((class color) (background light))
+     (:foreground "#008700" :background "#d7ff87"))
+    (((class color) (background dark))
+     (:foreground "#ff8700" :background "#565656")))
   "Face for bopomofo （注音符號）."
   :group 'moedict-faces)
 
 (defface moedict-bopomofo2
-  '((((class color)) (:inherit moedict-bopomofo)))
+  '((((class color) (background light))
+     (:inherit moedict-bopomofo))
+    (((class color) (background dark))
+     (:inherit moedict-bopomofo)))
   "Face for bopomofo2 （注音二式）."
   :group 'moedict-faces)
 
 (defface moedict-pinyin
-  '((((class color)) (:inherit moedict-bopomofo)))
+  '((((class color) (background light))
+     (:inherit moedict-bopomofo))
+    (((class color) (background dark))
+     (:inherit moedict-bopomofo)))
   "Face for pinyin （拼音）."
   :group 'moedict-faces)
 
 (defface moedict-type
-  '((((class color)) (:foreground "#ffffd7" :background "#525252")))
+  '((((class color) (background light))
+     (:foreground "#ffffd7" :background "#525252"))
+    (((class color) (background dark))
+     (:foreground "#525252" :background "#ffffff")))
   "Face for type. ex: [動]、[名]"
   :group 'moedict-faces)
 
 (defface moedict-quote
-  '((((class color)) (:foreground "#ff4ea3" :background nil :slant italic)))
+  '((((class color) (background light))
+     (:foreground "#ff4ea3" :background nil :slant italic))
+    (((class color) (background dark))
+     (:foreground "#ff6fa5" :background nil :slant italic)))
   "Face for quote."
   :group 'moedict-faces)
 
 (defface moedict-def
-  '((((class color)) (:foreground "#1f5bff" :background nil)))
+  '((((class color) (background light))
+     (:foreground "#1f5bff" :background nil))
+    (((class color) (background dark))
+     (:foreground "#8fccff" :background nil)))
   "Face for definitions."
   :group 'moedict-faces)
 
 (defface moedict-example
-  '((((class color)) (:foreground "#525252" :background nil)))
+  '((((class color) (background light))
+     (:foreground "#525252" :background nil))
+    (((class color) (background dark))
+     (:foreground "#eeeeee" :background nil)))
   "Face for example. ex: Example"
   :group 'moedict)
 
 (defface moedict-link
-  '((((class color)) (:foreground "#00d7af" :background nil)))
+  '((((class color) (background light))
+     (:foreground "#00d7af" :background nil))
+    (((class color) (background dark))
+     (:foreground "#74ffcf" :background nil)))
   "Face for link. ex:「見...等條」"
   :group 'moedict)
 
 (defface moedict-synonyms
-  '((((class color)) (:foreground "#9a08ff" :background nil)))
+  '((((class color) (background light))
+     (:foreground "#9a08ff" :background nil))
+    (((class color) (background dark))
+     (:foreground "#aa71ff" :background nil)))
   "Face for synonyms."
   :group 'moedict)
 
 (defface moedict-antonyms
-  '((((class color)) (:foreground "#9a08ff" :background nil)))
+  '((((class color) (background light))
+     (:foreground "#9a08ff" :background nil))
+    (((class color) (background dark))
+     (:foreground "#aa71ff" :background nil)))
   "Face for antonyms."
   :group 'moedict)
 
 (defface moedict-syn/antonyms-tag
-  '((((class color)) (:foreground "#ffffff" :background "#9a08ff")))
+  '((((class color) (background light))
+     (:foreground "#ffffff" :background "#9a08ff"))
+    (((class color) (background dark))
+     (:foreground "#9a08ff" :background "#eeaeff")))
   "Face for syn/antonyms-tag. ex: [同]"
   :group 'moedict)
 
