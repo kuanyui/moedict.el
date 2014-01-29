@@ -135,9 +135,10 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
     (if (equal parsed-finale 'failed)
         (message "查詢失敗，可能無此字詞。")
       (with-temp-buffer-window "*moedict*" nil nil
-                               ;; History的格式（數字為moedict-history-n、即nthcdr所用的值）：
+                               (moedict-mode)
+                               ;; History格式（數字為moedict-history-n、即nthcdr所用的值）：
                                ;; ("最新0" "1" "2" "3" ...)
-                               (defvar-local moedict-history '()
+                               (defvar-local moedict-history nil
                                  "History list of current moedict buffer.")
                                (defvar-local moedict-history-n 0
                                  "Record current position in moedict history list")
@@ -146,8 +147,7 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
                                      (nthcdr moedict-history-n moedict-history))
                                (push parsed-finale moedict-history)
                                (let (buffer-read-only)
-                                 (insert parsed-finale))
-                               (moedict-mode)))
+                                 (insert parsed-finale))))
     (if (not (equal (buffer-name) "*moedict*"))
         (switch-to-buffer-other-window "*moedict*"))))
 ;; [FIXME] 加上沒有網路時的curl錯誤訊息判斷？「Could not resolve host」
@@ -161,15 +161,16 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
             (message "查詢失敗，可能無此字詞。")
           (progn
             (with-temp-buffer-window "*moedict*" nil nil
-                                     (defvar-local moedict-history '()
+                                     (moedict-mode)
+                                     (defvar-local moedict-history nil
                                        "History list of current moedict buffer.")
                                      (defvar-local moedict-history-n 0
                                        "Record current position in moedict history list")
-                                     (setq moedict-history
-                                           (nthcdr moedict-history-n moedict-history))
+;;                                     (setq moedict-history
+;;                                           (nthcdr moedict-history-n moedict-history))
                                      (push parsed-finale moedict-history)
-                                     (insert parsed-finale)
-                                     (moedict-mode))
+                                     (let (buffer-read-only)
+                                       (insert parsed-finale)))
             (if (not (equal (buffer-name) "*moedict*"))
                 (switch-to-buffer-other-window "*moedict*")))))
         (let ((mark-even-if-inactive t))
