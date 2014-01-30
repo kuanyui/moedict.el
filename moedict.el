@@ -96,7 +96,11 @@ If nil, use `url.el' to do this.
 
 If `curl` installed on your system, it's recommended to setq this to t,
 because `url-retrieve' occurs GnuTLS error very often in our some testing.")
-(setq moedict-use-curl t)
+
+(if (and (executable-find "curl")
+         (not (equal system-type 'ms-dos))
+         (not (equal system-type 'windows-nt)))
+    (setq moedict-use-curl t))
 
 (define-derived-mode moedict-mode nil "MoeDict"
   "Major mode for looking up Chinese vocabulary via Moedict API."

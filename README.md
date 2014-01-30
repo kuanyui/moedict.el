@@ -28,7 +28,7 @@ If you're using Un*x-like OS and `curl` is available on your system, we suggest 
 - `moedict-lookup-region` to look up vocabulary under the selected region.
 
 ## Key-binding
-If under *moedict* buffer:
+If under `*moedict*` buffer:
 
 | Key     | Command                    |
 |---------|----------------------------|
