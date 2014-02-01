@@ -9,6 +9,8 @@ Moedict-mode is a major mode for looking up Traditional Chinese vocabulary in Em
 <a href="https://raw.github.com/kuanyui/moedict.el/master/screenshot.png"><img src="screenshot.png" width="710" height="379"/></a>
 
 #Installation
+**Note: Support Emacs 24.3 and above.**
+
 Add following to your `~/.emacs.d/init.el` or `~/.emacs`:
 ```lisp
 (add-to-list 'load-path "~/path/to/moedict/")
