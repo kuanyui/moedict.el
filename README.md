@@ -36,14 +36,11 @@ If under `*moedict*` buffer:
 |-----------+--------------------------------|
 | l         | `moedict-lookup`               |
 | r         | `moedict-lookup-region`        |
-|-----------+--------------------------------|
 | C-c C-b   | `moedict-backward-history`     |
 | C-c C-f   | `moedict-forward-history`      |
 | C-c D     | `moedict-clear-history`        |
-|-----------+--------------------------------|
 | TAB       | `moedict-cursor-forward-word`  |
 | Shift-TAB | `moedict-cursor-backward-word` |
-|-----------+--------------------------------|
 | q         | Close/bury the buffer.         |
 | h         | Display help.                  |
 
