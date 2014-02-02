@@ -6,7 +6,7 @@
 ;; Keywords: dictionary
 ;; Compatibility: Emacs 24.3 and above
 
-;; This file is NOT part of GNU Emacs
+;; This file is NOT a part of GNU Emacs
 
 ;;; License:
 
@@ -66,6 +66,8 @@
     (define-key map (kbd "h") 'describe-mode)
     (define-key map (kbd "l") 'moedict-lookup)
     (define-key map (kbd "r") 'moedict-lookup-region)
+    (define-key map (kbd "<tab>") 'moedict-cursor-forward-word)
+    (define-key map (kbd "<backtab>") 'moedict-cursor-backward-word)
     (define-key map (kbd "C-c C-b") 'moedict-backward-history)
     (define-key map (kbd "C-c C-f") 'moedict-forward-history)
     (define-key map (kbd "C-c D") 'moedict-clear-history)
@@ -237,6 +239,44 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
   :group 'moedict)
 
 ;; ===========================================================
+(defvar moedict-characters-pattern "[^ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄧㄨㄩㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦˊˇˋ。，！？；：．「」『』（）、【】《》〈〉— [:ascii:]āáǎàēéěèīíǐìōóǒòūúǔù]+")
+
+(defun moedict-cursor-forward-word ()
+  (interactive)
+  (if (not (re-search-forward moedict-characters-pattern nil t))
+      (message "End of buffer.")))
+
+(defun moedict-cursor-backward-word ()
+  (interactive)
+  (backward-word 2)
+  (re-search-forward moedict-characters-pattern nil t))
+
+(defun moedict-backward-history ()
+  (interactive)
+  (if (not (equal (buffer-name) "*moedict*"))
+      (message "Please run this command in *moedict* buffer.")
+    (if (or (equal (length moedict-history) (1+ moedict-history-n))
+            (<= (length moedict-history) 1))
+        (message "There's no older item in history.")
+      (let (buffer-read-only)         ;Unlock buffer-read-only
+        (delete-region (point-min) (point-max))
+        (setq moedict-history-n (1+ moedict-history-n))
+        (insert (nth moedict-history-n moedict-history))
+        (beginning-of-buffer)
+        (message "Backward!")))))
+
+(defun moedict-forward-history ()
+  (interactive)
+  (if (not (equal (buffer-name) "*moedict*"))
+      (message "Please run this command in *moedict* buffer.")
+    (if (<= moedict-history-n 0)
+        (message "There's no newer item in history.")
+      (let (buffer-read-only)
+        (delete-region (point-min) (point-max))
+        (setq moedict-history-n (1- moedict-history-n))
+        (insert (nth moedict-history-n moedict-history))
+        (beginning-of-buffer)
+        (message "Forward!")))))
 
 (defun moedict-lookup ()
   "Look up Chinese vocabulary with moedict."
@@ -282,33 +322,6 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
           (set-mark-command nil)
           (message "Move cursor to select a region and run `moedict-lookup-region' again to finish."))))
 ;; [FIXME] 自動改變按鍵指示
-
-(defun moedict-backward-history ()
-  (interactive)
-  (if (not (equal (buffer-name) "*moedict*"))
-      (message "Please run this command in *moedict* buffer.")
-    (if (or (equal (length moedict-history) (1+ moedict-history-n))
-            (<= (length moedict-history) 1))
-        (message "There's no older item in history.")
-      (let (buffer-read-only)         ;Unlock buffer-read-only
-        (delete-region (point-min) (point-max))
-        (setq moedict-history-n (1+ moedict-history-n))
-        (insert (nth moedict-history-n moedict-history))
-        (beginning-of-buffer)
-        (message "Backward!")))))
-
-(defun moedict-forward-history ()
-  (interactive)
-  (if (not (equal (buffer-name) "*moedict*"))
-      (message "Please run this command in *moedict* buffer.")
-    (if (<= moedict-history-n 0)
-        (message "There's no newer item in history.")
-      (let (buffer-read-only)
-        (delete-region (point-min) (point-max))
-        (setq moedict-history-n (1- moedict-history-n))
-        (insert (nth moedict-history-n moedict-history))
-        (beginning-of-buffer)
-        (message "Forward!")))))
 
 (defun moedict-retrieve-json (word)
   "Get JSON and return the parsed list of the word.

@@ -32,15 +32,20 @@ If you're using Un*x-like OS and `curl` is available on your system, we suggest 
 ## Key-binding
 If under `*moedict*` buffer:
 
-| Key     | Command                    |
-|---------|----------------------------|
-| l       | `moedict-lookup`           |
-| r       | `moedict-lookup-region`    |
-| C-c C-b | `moedict-backward-history` |
-| C-c C-f | `moedict-forward-history`  |
-| C-c D   | `moedict-clear-history`    |
-| q       | Close/bury the buffer.     |
-| h       | Display help.              |
+| Key       | Command                        |
+|-----------+--------------------------------|
+| l         | `moedict-lookup`               |
+| r         | `moedict-lookup-region`        |
+|-----------+--------------------------------|
+| C-c C-b   | `moedict-backward-history`     |
+| C-c C-f   | `moedict-forward-history`      |
+| C-c D     | `moedict-clear-history`        |
+|-----------+--------------------------------|
+| TAB       | `moedict-cursor-forward-word`  |
+| Shift-TAB | `moedict-cursor-backward-word` |
+|-----------+--------------------------------|
+| q         | Close/bury the buffer.         |
+| h         | Display help.                  |
 
 #License
 BSD License.
