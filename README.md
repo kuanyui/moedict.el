@@ -38,7 +38,7 @@ If under `*moedict*` buffer:
 | r         | `moedict-lookup-region`        |
 | C-c C-b   | `moedict-history-backward`     |
 | C-c C-f   | `moedict-history-forward`      |
-| C-c D     | `moedict-clear-history`        |
+| C-c D     | `moedict-history-clean`        |
 | TAB       | `moedict-cursor-forward-word`  |
 | Shift-TAB | `moedict-cursor-backward-word` |
 | q         | Close/bury the buffer.         |
