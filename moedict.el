@@ -408,9 +408,9 @@ e.g. [a b c] => (a b c)"
       (progn (put-text-property 0 (length bopomofo2) 'face 'moedict-bopomofo2 bopomofo2)
              (setq HETERONYM (format "%s %s" HETERONYM bopomofo2))))
     (setq HETERONYM
-          (format "%s%s\n\n" HETERONYM
+          (format "%s%s" HETERONYM
                   (moedict-run-definitions (cdr (assoc 'definitions heteronym)))))
-    (setq HETERONYMS (format "%s" (concat HETERONYMS HETERONYM)))))
+    (setq HETERONYMS (format "%s\n\n" (concat HETERONYMS HETERONYM)))))
 
 (defun moedict-run-definitions (definitions)
   "Do not use this seperately.
@@ -433,9 +433,13 @@ e.g. [a b c] => (a b c)"
             (setq type (format "[%s]" type))
             (put-text-property 0 (length type) 'face 'moedict-type type)
             (setq DEFINITIONS (format "%s" (concat DEFINITIONS "\n\n " type))))))
-    (when (setq def (cdr (assoc 'def definition)))
-      (progn (put-text-property 0 (length def) 'face 'moedict-def def)
-             (setq DEFINITIONS (format "%s" (concat DEFINITIONS "\n\n    " def)))))
+    (if (and (setq def (cdr (assoc 'def definition)))
+             (> (length def) 0))
+        ;; 不然一個 heteronym 沒有def時，link會多出不必要的空行，例如「混」
+        (progn (put-text-property 0 (length def) 'face 'moedict-def def)
+               (setq DEFINITIONS (format "%s" (concat DEFINITIONS "\n\n    " def))))
+      (setq DEFINITIONS (format "%s" (concat DEFINITIONS "\n"))))
+
     ;; example的cdr是vector
     (when (setq example (cdr (assoc 'example definition)))
       (dolist (x (vector-to-list example))
@@ -460,6 +464,6 @@ e.g. [a b c] => (a b c)"
     (when (setq link (cdr (assoc 'link definition)))
       (dolist (x (vector-to-list link))
         (put-text-property 0 (length x) 'face 'moedict-link x)
-        (setq DEFINITIONS (format "%s\n            %s" DEFINITIONS x))))))
+        (setq DEFINITIONS (format "%s\n        %s" DEFINITIONS x))))))
 
 (provide 'moedict)
