@@ -41,9 +41,9 @@
 ;;
 ;; l         `moedict-lookup'
 ;; r         `moedict-lookup-region'
-;; C-c C-b   `moedict-backward-history'
-;; C-c C-f   `moedict-forward-history'
-;; C-c D     `moedict-clear-history'
+;; C-c C-b   `moedict-history-backward'
+;; C-c C-f   `moedict-history-forward'
+;; C-c D     `moedict-history-clean'
 ;; q         Close/bury the buffer.
 ;; h         Display help.
 
@@ -68,9 +68,9 @@
     (define-key map (kbd "r") 'moedict-lookup-region)
     (define-key map (kbd "<tab>") 'moedict-cursor-forward-word)
     (define-key map (kbd "<backtab>") 'moedict-cursor-backward-word)
-    (define-key map (kbd "C-c C-b") 'moedict-backward-history)
-    (define-key map (kbd "C-c C-f") 'moedict-forward-history)
-    (define-key map (kbd "C-c D") 'moedict-clear-history)
+    (define-key map (kbd "C-c C-b") 'moedict-history-backward)
+    (define-key map (kbd "C-c C-f") 'moedict-history-forward)
+    (define-key map (kbd "C-c D") 'moedict-history-clean)
     map)
   "Keymap for Moedict major mode.")
 
@@ -81,7 +81,7 @@
 (defvar moedict-history-n 0
   "Record current position in moedict history list")
 ;; [FIXME] 以上兩者應該改成*moedict*內的local variable，但我做不出來，好像每次 (with-temp-buffer-window ...)都會改掉local variable.暫時先定義一個function讓人可以清除history
-(defun moedict-clear-history ()
+(defun moedict-history-clean ()
   "Clear all history of moedict."
   (interactive)
   (if (yes-or-no-p "Really clear all history?")
@@ -251,7 +251,7 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
   (backward-word 2)
   (re-search-forward moedict-characters-pattern nil t))
 
-(defun moedict-backward-history ()
+(defun moedict-history-backward ()
   (interactive)
   (if (not (equal (buffer-name) "*moedict*"))
       (message "Please run this command in *moedict* buffer.")
@@ -265,7 +265,7 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
         (beginning-of-buffer)
         (message "Backward!")))))
 
-(defun moedict-forward-history ()
+(defun moedict-history-forward ()
   (interactive)
   (if (not (equal (buffer-name) "*moedict*"))
       (message "Please run this command in *moedict* buffer.")
