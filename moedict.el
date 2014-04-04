@@ -29,7 +29,7 @@
 ;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ;; ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 ;; WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-;; DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+;; DISCLAIMED. IN NO EVENT SHALL KUANYUI BE LIABLE FOR ANY
 ;; DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 ;; (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
 ;; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
@@ -310,18 +310,18 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
         (parsed-finale (moedict-run-parser (format "%s" user-input))))
     (if (equal parsed-finale 'failed)
         (message "查詢失敗，可能無此字詞。")
-      (with-temp-buffer-window "*moedict*" nil nil
-                               (if (not (equal major-mode 'moedict-mode))
-                                   (moedict-mode))
-                               ;; 每次有新查詢就把forward的資料清空，只留下cdr
-                               (setq moedict-history
-                                     (nthcdr moedict-history-n moedict-history))
-                               (setq moedict-history-n 0)
-                               (push parsed-finale moedict-history)
-                               (let (buffer-read-only)
-                                 (insert parsed-finale))))
-    (if (not (equal (buffer-name) "*moedict*"))
-        (switch-to-buffer-other-window "*moedict*"))))
+      (progn (with-temp-buffer-window "*moedict*" nil nil)
+             (if (not (equal (buffer-name) "*moedict*"))
+                 (switch-to-buffer-other-window "*moedict*"))
+             (if (not (equal major-mode 'moedict-mode))
+                 (moedict-mode))
+             ;; 每次有新查詢就把forward的資料清空，只留下cdr
+             (setq moedict-history
+                   (nthcdr moedict-history-n moedict-history))
+             (setq moedict-history-n 0)
+             (push parsed-finale moedict-history)
+             (let (buffer-read-only)
+               (insert parsed-finale))))))
 ;; [FIXME] 加上沒有網路時的curl錯誤訊息判斷？「Could not resolve host」
 
 (defun moedict-lookup-region (begin end)
@@ -331,21 +331,20 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
              (parsed-finale (moedict-run-parser region-input)))
         (if (equal parsed-finale 'failed)
             (message "查詢失敗，可能無此字詞。")
-          (progn
-            (with-temp-buffer-window "*moedict*" nil nil
-                                     (if (not (equal major-mode 'moedict-mode))
-                                         (moedict-mode))
-                                     (setq moedict-history
-                                           (nthcdr moedict-history-n moedict-history))
-                                     (setq moedict-history-n 0)
-                                     (push parsed-finale moedict-history)
-                                     (let (buffer-read-only)
-                                       (insert parsed-finale)))
-            (if (not (equal (buffer-name) "*moedict*"))
-                (switch-to-buffer-other-window "*moedict*")))))
-        (let ((mark-even-if-inactive t))
-          (set-mark-command nil)
-          (message "Move cursor to select a region and run `moedict-lookup-region' again to finish."))))
+          (progn (with-temp-buffer-window "*moedict*" nil nil)
+                 (if (not (equal (buffer-name) "*moedict*"))
+                     (switch-to-buffer-other-window "*moedict*"))
+                 (if (not (equal major-mode 'moedict-mode))
+                     (moedict-mode))
+                 (setq moedict-history
+                       (nthcdr moedict-history-n moedict-history))
+                 (setq moedict-history-n 0)
+                 (push parsed-finale moedict-history)
+                 (let (buffer-read-only)
+                   (insert parsed-finale))))))
+  (let ((mark-even-if-inactive t))
+    (set-mark-command nil)
+          (message "Move cursor to select a region and run `moedict-lookup-region' again to finish.")))
 ;; [FIXME] 自動改變按鍵指示
 
 (defun moedict-retrieve-json (word)
