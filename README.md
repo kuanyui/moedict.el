@@ -15,8 +15,7 @@ Add following to your `~/.emacs.d/init.el` or `~/.emacs`:
 ```lisp
 (add-to-list 'load-path "~/path/to/moedict/")
 (require 'moedict)
-(global-set-key (kbd "C-c m l") 'moedict-lookup)
-(global-set-key (kbd "C-c m r") 'moedict-lookup-region)
+(global-set-key (kbd "C-c d m") 'moedict-lookup) ;[memorization] Dictionary => Moedict 
 ```
 
 If you're using Un*x-like OS and `curl` is available on your system, we suggest using it instead of `url.el` to avoid some strange GnuTLS errors:
@@ -26,8 +25,7 @@ If you're using Un*x-like OS and `curl` is available on your system, we suggest 
 ```
 
 #Usage
-- `moedict-lookup` to look up vocabulary via minibuffer.
-- `moedict-lookup-region` to look up vocabulary under the selected region.
+Press `C-c d m` `moedict-lookup` to look up vocabulary via minibuffer; when you've selected a region, this will lookup the selected word.
 
 ## Key-binding
 If under `*moedict*` buffer:
