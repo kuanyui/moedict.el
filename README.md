@@ -25,7 +25,7 @@ If you're using Un*x-like OS and `curl` is available on your system, we suggest 
 ```
 
 #Usage
-Press `C-c d m` `moedict-lookup` to look up vocabulary via minibuffer; when you've selected a region, this will lookup the selected word.
+Press `C-c d m` `moedict-lookup` to look up vocabulary via minibuffer; when a region selected, lookup selected region instead.
 
 ## Key-binding
 If under `*moedict*` buffer:
