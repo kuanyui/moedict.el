@@ -64,13 +64,20 @@
 ;;
 ;; If under *moedict* buffer:
 ;;
-;; l         `moedict-lookup'
-;; r         `moedict-lookup-region'
-;; C-c C-b   `moedict-history-backward'
-;; C-c C-f   `moedict-history-forward'
-;; C-c D     `moedict-history-clean'
-;; q         Close/bury the buffer.
-;; h         Display help.
+;; ================= Basic =================
+;; l             `moedict-lookup'
+;; r             `moedict-lookup-region'
+;; ================ History ================
+;; C-c C-b , [   `moedict-history-backward'
+;; C-c C-f , ]   `moedict-history-forward'
+;; C-c D         `moedict-history-clean'
+;; ============== Navigation ===============
+;; TAB           Move cursor to next word.
+;; Shift-TAB     Move cursor to previous word.
+;; ================= Misc ==================
+;; o             `moedict-open-website-of-this-entry'
+;; q             Close/bury the buffer.
+;; h             Display help.
 
 ;;; Code:
 
@@ -93,8 +100,11 @@
     (define-key map (kbd "r") 'moedict-lookup-region)
     (define-key map (kbd "<tab>") 'moedict-cursor-forward-word)
     (define-key map (kbd "<backtab>") 'moedict-cursor-backward-word)
+    (define-key map (kbd "o") 'moedict-open-website-of-this-entry)
     (define-key map (kbd "C-c C-b") 'moedict-history-backward)
     (define-key map (kbd "C-c C-f") 'moedict-history-forward)
+    (define-key map (kbd "[") 'moedict-history-backward)
+    (define-key map (kbd "]") 'moedict-history-forward)
     (define-key map (kbd "C-c D") 'moedict-history-clean)
     map)
   "Keymap for Moedict major mode.")
@@ -115,7 +125,6 @@
         (setq moedict-history-n 0)
         (message "Done."))
     (message "Canceled.")))
-
 
 (defvar moedict-use-curl nil
   "If non-nil, call shell command `curl` to fetch json data.
@@ -303,12 +312,19 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
         (beginning-of-buffer)
         (message "Forward!")))))
 
+(defun moedict-open-website-of-this-entry ()
+  (interactive)
+  (if moedict-history
+      (progn (string-match "^\\([^ ]+\\)" (car moedict-history))
+             (browse-url-default-browser (concat "https://www.moedict.tw/" (match-string-no-properties 1 (car moedict-history)))))
+    (message "歷史紀錄是空的欸；請先查詢任一字詞。")))
+
 (defun moedict-lookup (&optional begin end)
   "Look up Chinese vocabulary with moedict."
   (interactive "r")
-  (let* ((user-input (if (region-active-p)
+  (let* ((user-input (if mark-active
                          (buffer-substring-no-properties begin end)
-                         (read-from-minibuffer "萌典：")))
+                       (read-from-minibuffer "萌典：")))
         (parsed-finale (moedict-run-parser (format "%s" user-input))))
     (if (equal parsed-finale 'failed)
         (message "查詢失敗，可能無此字詞。")
@@ -348,7 +364,11 @@ because `url-retrieve' occurs GnuTLS error very often in our some testing.")
                    (goto-char (point-min))))))
     (let ((mark-even-if-inactive t))
       (set-mark-command nil)
-      (message "Move cursor to select a region and run `moedict-lookup-region' again to finish."))))
+      (message (concat "使用方向鍵移動游標來選取欲查詢的字詞，完成後請再"
+                       (if (eq major-mode 'moedict)
+                           "按一次 r 以查詢該字詞"
+                         "執行一次 `moedict-lookup-region' 以查詢該字詞")))
+      )))
 ;; [FIXME] 自動改變按鍵指示
 
 (defun moedict-retrieve-json (word)
