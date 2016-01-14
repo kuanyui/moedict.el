@@ -20,20 +20,183 @@
 
 ;;; Commentary:
 
-;; 
 
 ;;; Code:
+
+;; ======================================================
+;; Variables
+;; ======================================================
 (require 'esqlite)
+(require 'helm)
 
 (setq moedict-prompt "萌典：")
-(setq moedict-buffer "*萌典*")
-(setq moedict-candidate-buffer-title "候選字列表")
+(setq moedict-buffer-name "*[萌典]查詢結果*")
+(setq moedict-candidate-buffer-name "*[萌典]候選字*")
 (setq moedict-candidates-limit 200)
 (setq moedict-synonyms-tag (propertize "同" 'face 'moedict-syn/antonyms-tag))
 (setq moedict-antonyms-tag (propertize "反" 'face 'moedict-syn/antonyms-tag))
-
-
 (defvar moedict-sqlite-stream nil)
+
+(defcustom moedict-mode-hook nil
+  "Normal hook run when entering moedict-mode."
+  :type 'hook
+  :group 'moedict)
+
+(defvar moedict-mode-map
+  (let ((map (make-sparse-keymap)))
+    ;; Element insertion
+    (define-key map (kbd "q") 'quit-window)
+    (define-key map (kbd "h") 'describe-mode)
+    (define-key map (kbd "l") 'moedict-lookup)
+    (define-key map (kbd "r") 'moedict-lookup-region)
+    (define-key map (kbd "<tab>") 'moedict-cursor-forward-word)
+    (define-key map (kbd "<backtab>") 'moedict-cursor-backward-word)
+    (define-key map (kbd "o") 'moedict-open-website-of-this-entry)
+    (define-key map (kbd "C-c C-b") 'moedict-history-backward)
+    (define-key map (kbd "C-c C-f") 'moedict-history-forward)
+    (define-key map (kbd "[") 'moedict-history-backward)
+    (define-key map (kbd "]") 'moedict-history-forward)
+    (define-key map (kbd "C-c D") 'moedict-history-clean)
+    map)
+  "Keymap for Moedict major mode.")
+
+(defvar moedict-history nil
+  "History list of current moedict buffer.")
+
+(define-derived-mode moedict-mode nil "MoeDict"
+  "Major mode for looking up Chinese vocabulary via Moedict API."
+  (set (make-local-variable 'buffer-read-only) t))
+
+(defgroup moedict nil
+  "Major mode for looking up Chinese vocabulary via Moedict API."
+  :prefix "moedict-"
+  :link '(url-link "http://github.com/kuanyui/moedict.el"))
+
+(defgroup moedict-faces nil
+  "Faces used in Moedict-mode"
+  :group 'moedict
+  :group 'faces)
+
+(defface moedict-title
+  '((((class color) (background light))
+     (:foreground "#ff8700" :bold t :height 1.2))
+    (((class color) (background dark))
+     (:foreground "#ffa722" :bold t :height 1.2)))
+  "Face for title. ex:"
+  :group 'moedict-faces)
+
+(defface moedict-stroke-count
+  '((((class color) (background light))
+     (:foreground "#787878"))
+    (((class color) (background dark))
+     (:foreground "#c1c1c1")))
+  "Face for stroke-count."
+  :group 'moedict-faces)
+
+(defface moedict-radical
+  '((((class color) (background light))
+     (:foreground "#ffffff" :background "#a40000"))
+    (((class color) (background dark))
+     (:foreground "#ffffff" :background "#a40000")))
+  "Face for character's radical."
+  :group 'moedict-faces)
+
+(defface moedict-non-radical-stroke-count
+  '((((class color) (background light))
+     (:inherit moedict-stroke-count))
+    (((class color) (background dark))
+     (:inherit moedict-stroke-count)))
+  "Face for non-radical stroke-count."
+  :group 'moedict-faces)
+
+(defface moedict-bopomofo
+  '((((class color) (background light))
+     (:foreground "#008700" :background "#d7ff87"))
+    (((class color) (background dark))
+     (:foreground "#a1db00" :background "#5a5a5a")))
+  "Face for bopomofo （注音符號）."
+  :group 'moedict-faces)
+
+(defface moedict-bopomofo2
+  '((((class color) (background light))
+     (:inherit moedict-bopomofo))
+    (((class color) (background dark))
+     (:inherit moedict-bopomofo)))
+  "Face for bopomofo2 （注音二式）."
+  :group 'moedict-faces)
+
+(defface moedict-pinyin
+  '((((class color) (background light))
+     (:inherit moedict-bopomofo))
+    (((class color) (background dark))
+     (:inherit moedict-bopomofo)))
+  "Face for pinyin （拼音）."
+  :group 'moedict-faces)
+
+(defface moedict-type
+  '((((class color) (background light))
+     (:foreground "#ffffd7" :background "#525252"))
+    (((class color) (background dark))
+     (:foreground "#525252" :background "#c1c1c1")))
+  "Face for type. ex: [動]、[名]"
+  :group 'moedict-faces)
+
+(defface moedict-quote
+  '((((class color) (background light))
+     (:foreground "#ff4ea3" :slant italic))
+    (((class color) (background dark))
+     (:foreground "#ff6fa5" :slant italic)))
+  "Face for quote."
+  :group 'moedict-faces)
+
+(defface moedict-def
+  '((((class color) (background light))
+     (:foreground "#1f5bff"))
+    (((class color) (background dark))
+     (:foreground "#6faaff")))
+  "Face for definitions."
+  :group 'moedict-faces)
+
+(defface moedict-example
+  '((((class color) (background light))
+     (:foreground "#525252"))
+    (((class color) (background dark))
+     (:foreground "#cdcdcd")))
+  "Face for example. ex: Example"
+  :group 'moedict)
+
+(defface moedict-link
+  '((((class color) (background light))
+     (:foreground "#00a775"))
+    (((class color) (background dark))
+     (:foreground "#00d7af")))
+  "Face for link. ex:「見...等條」"
+  :group 'moedict)
+
+(defface moedict-synonyms
+  '((((class color) (background light))
+     (:foreground "#9a08ff"))
+    (((class color) (background dark))
+     (:foreground "#aa71ff")))
+  "Face for synonyms."
+  :group 'moedict)
+
+(defface moedict-antonyms
+  '((((class color) (background light))
+     (:foreground "#9a08ff"))
+    (((class color) (background dark))
+     (:foreground "#aa71ff")))
+  "Face for antonyms."
+  :group 'moedict)
+
+(defface moedict-syn/antonyms-tag
+  '((((class color) (background light))
+     (:foreground "#ffffff" :background "#9a08ff"))
+    (((class color) (background dark))
+     (:foreground "#7008a0" :background "#eeaeff")))
+  "Face for syn/antonyms-tag. ex: [同]"
+  :group 'moedict)
+
 
 ;; ======================================================
 ;; Query
@@ -117,6 +280,12 @@ Don't borthered by the serial numbers."
              (remove-if #'null args)
              "\n"))
 
+(defun moedict-mapconcat (list)
+  "Ignore nil, seperator is \n\n."
+  (mapconcat #'identity
+             (remove-if #'null list)
+             "\n\n"))
+
 (defun moedict--replace-null-with-nil (list)
   "replace all :null in (two-level) list with nil"
   (mapcar (lambda (x)
@@ -132,7 +301,7 @@ Don't borthered by the serial numbers."
 (defmacro moedict--render-type ()
   `(let ((type (moedict--get-column row 'type)))
      (if type
-         (concat " " (propertize (format "[%s]" type) 'face 'moedict-type))
+         (concat "\n\n " (propertize (format "[%s]" type) 'face 'moedict-type))
        "")
   ))
 
@@ -160,14 +329,15 @@ Don't borthered by the serial numbers."
 (defun moedict--render-rows (rows)
   "ROWS is the query result retrieved from `moedict-query-vocabulary',
 Return value is rendered string."
-  (mapconcat
-   #'identity
+  (moedict-mapconcat
    (cons
     ;; car
-    (format "%s + %s = %s"
-            (propertize (moedict--get-column (car rows) 'radical) 'face 'moedict-radical)
-            (moedict--get-column (car rows) 'non_radical_stroke_count)
-            (moedict--get-column (car rows) 'stroke_count))
+    (if (eq :null (moedict--get-column (car rows) 'radical))
+        nil
+      (format "%s + %s = %s"
+              (propertize (moedict--get-column (car rows) 'radical) 'face 'moedict-radical)
+              (moedict--get-column (car rows) 'non_radical_stroke_count)
+              (moedict--get-column (car rows) 'stroke_count)))
     ;; cdr
     (let ( bopomofo type )
       (mapcar
@@ -175,7 +345,7 @@ Return value is rendered string."
          (cond ((not (equal (moedict--get-column row 'bopomofo) bopomofo))
                 (setq bopomofo (moedict--get-column row 'bopomofo))
                 (setq type (moedict--get-column row 'type))
-                (format "%s %s %s %s\n\n%s\n\n%s"
+                (format "%s %s %s %s%s\n\n%s"
                         (propertize (moedict--get-column row 'title) 'face 'moedict-title)
                         (propertize (moedict--get-column row 'bopomofo) 'face 'moedict-bopomofo)
                         (propertize (moedict--get-column row 'pinyin) 'face 'moedict-pinyin)
@@ -189,36 +359,39 @@ Return value is rendered string."
                (t
                 (moedict--render-def))))
        (moedict--replace-null-with-nil rows))
-      ))
-   "\n\n")
-  )
+      ))))
 
 (defun moedict-render (vocabulary)
   (moedict--render-rows (moedict-query-vocabulary vocabulary)))
 
 ;; ======================================================
-;; Helm
+;; UI
 ;; ======================================================
 
-(moedict-render "王")
+(defun moedict-lookup-and-show (vocabulary)
+  ""
+  (if (null vocabulary)
+      (message "[萌典] 找不到你輸入的這個單字喔！")
+    (progn
+      (message "[萌典] 查詢中...")
+      (let ((rendered-result (moedict-render vocabulary)))
+        (with-temp-buffer-window moedict-buffer-name nil nil)
+        (with-selected-window (get-buffer-window moedict-buffer-name)
+          (let (buffer-read-only)
+            (insert rendered-result))))
+      (message "[萌典] 查詢完成。"))))
 
-;;(with-selected-window "*萌典::查詢結果*" "hello")
-
-(helm :sources
-      (helm-build-sync-source moedict-candidate-buffer-title
+(defun moedict ()
+  (interactive)
+  (helm :sources
+      (helm-build-sync-source "請輸入您欲查詢的單字："
         :candidates (lambda () (moedict-get-candidates-list helm-pattern))
         :volatile t
         :candidate-number-limit moedict-candidates-limit
+        :action #'moedict-lookup-and-show
         )
-      :buffer moedict-buffer
-      :prompt moedict-prompt)
-
-
-
-
-
-
-
+      :buffer moedict-candidate-buffer-name
+      :prompt moedict-prompt))
 
 
 
