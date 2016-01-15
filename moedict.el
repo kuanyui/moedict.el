@@ -426,8 +426,7 @@ Return value is rendered string."
   (if (null point) (setq point (point)))
   (let ((face (get-text-property point 'face)))
     (and face (listp face) (or (member '(underline t) face)
-                               (equal  '(underline t) face))
-         )))
+                               (equal  '(underline t) face)))))
 
 (defun moedict-try-to-get-vocabulary-at-point ()
   (let ((pos (point))
@@ -443,17 +442,22 @@ Return value is rendered string."
       ;; `moedict-try-to-get-vocabulary-max-length'
       (save-excursion
         (search-backward-regexp moedict-punctuations nil t 1)
-        (setq begin (1+ (point)))
         (right-char 1)
+        (setq begin (point))
         (search-forward-regexp moedict-punctuations nil t 1)
         (setq end (1- (point)))
         (message (format "%s" (list begin end)))
         (if (<= (- end begin) moedict-try-to-get-vocabulary-max-length)
             (format "%s" (buffer-substring begin end)) ; [2] got guessed vocabulary according punctuation
-          (if (moedict-if-a-valid-chinese-character (char-after pos))
-              (char-to-string (char-after pos))  ; [3] The single character at point
-            ""                                   ; [4] None of above
-            ))))))
+          (moedict-try-to-get-single-char-at-point pos) ; [3] Try to get single character at point
+          )))))
+
+(defun moedict-try-to-get-single-char-at-point (&optional pos)
+  (if (null pos) (setq pos (point)))
+  (if (moedict-if-a-valid-chinese-character (char-after pos))
+      (char-to-string (char-after pos))
+    ""
+    ))
 
 (defun moedict-if-a-valid-chinese-character (char)
   "Not include punctuation."
@@ -491,6 +495,8 @@ Return value is rendered string."
                 (previous-property-change pos))
       (setq pos (previous-property-change pos)))
     (goto-char pos)))
+
+
 
 
 (provide 'moedict)
