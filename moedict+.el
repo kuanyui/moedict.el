@@ -350,14 +350,13 @@ Return value is rendered string."
                         (propertize (moedict--get-column row 'bopomofo) 'face 'moedict-bopomofo)
                         (propertize (moedict--get-column row 'pinyin) 'face 'moedict-pinyin)
                         (propertize (moedict--get-column row 'bopomofo2) 'face 'moedict-bopomofo2)
-                        (if type "\n\n" "")
+                        (if type "\n\n" "") ; Because some vocabulary have no type
                         (moedict--render-type)
                         (moedict--render-def)))
                ((not (equal (moedict--get-column row 'type) type))
                 (setq type (moedict--get-column row 'type))
-                ;; Because some vocabulary have no type:
                 (concat (moedict--render-type)
-                        (if type "\n\n" "")
+                        (if type "\n\n" "") ; Because some vocabulary have no type
                         (moedict--render-def)))
                (t
                 (moedict--render-def))))
