@@ -345,18 +345,19 @@ Return value is rendered string."
          (cond ((not (equal (moedict--get-column row 'bopomofo) bopomofo))
                 (setq bopomofo (moedict--get-column row 'bopomofo))
                 (setq type (moedict--get-column row 'type))
-                (format "%s %s %s %s\n\n%s\n\n%s"
+                (format "%s %s %s %s%s%s\n\n%s"
                         (propertize (moedict--get-column row 'title) 'face 'moedict-title)
                         (propertize (moedict--get-column row 'bopomofo) 'face 'moedict-bopomofo)
                         (propertize (moedict--get-column row 'pinyin) 'face 'moedict-pinyin)
                         (propertize (moedict--get-column row 'bopomofo2) 'face 'moedict-bopomofo2)
+                        (if type "\n\n" "")
                         (moedict--render-type)
                         (moedict--render-def)))
                ((not (equal (moedict--get-column row 'type) type))
                 (setq type (moedict--get-column row 'type))
                 ;; Because some vocabulary have no type:
                 (concat (moedict--render-type)
-                        "\n\n"
+                        (if type "\n\n" "")
                         (moedict--render-def)))
                (t
                 (moedict--render-def))))
