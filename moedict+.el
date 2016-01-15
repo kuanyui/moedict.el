@@ -293,18 +293,18 @@ Don't borthered by the serial numbers."
                     x))
           list))
 
-(defun moedict-match-positions (regexp str &optional subexp-depth)
-  "Get all matched regexp groups positions grabbed with \\(\\)
-e.g. ((1 . 5) (8 . 10))"
+(defun moedict-match-positions (regexp string &optional subexp-depth)
+  "Get all matched REGEXP position in a STRING.
+SUBEXP-DEPTH is 0 by default."
   (if (null subexp-depth)
       (setq subexp-depth 0))
-  (let ((pos 0) res)
-    (while (and (string-match regexp str pos)
-                (< pos (length str)))
+  (let ((pos 0) result)
+    (while (and (string-match regexp string pos)
+                (< pos (length string)))
       (let ((m (match-end subexp-depth)))
-        (push (cons (match-beginning subexp-depth) (match-end subexp-depth)) res)
+        (push (cons (match-beginning subexp-depth) (match-end subexp-depth)) result)
         (setq pos m)))
-    (nreverse res)))
+    (nreverse result)))
 
 (moedict-match-positions "「\\(.+?\\)」" "「哈囉」「科科」" 1)
 ;; ======================================================
