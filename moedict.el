@@ -47,7 +47,10 @@
     ;; Element insertion
     (define-key map (kbd "q") 'quit-window)
     (define-key map (kbd "h") 'describe-mode)
+    (define-key map (kbd "<enter>") 'moedict:enter)
+    (define-key map (kbd "RET") 'moedict:enter)
     (define-key map (kbd "<tab>") 'moedict:tab)
+    (define-key map (kbd "TAB") 'moedict:tab)
     (define-key map (kbd "<backtab>") 'moedict:shift+tab)
     map)
   "Keymap for Moedict major mode.")
@@ -61,7 +64,7 @@
 
 (defgroup moedict nil
   "Major mode for looking up Chinese vocabulary via Moedict API."
-  :prefix "moedict-"
+  :prefix "moedict"
   :link '(url-link "http://github.com/kuanyui/moedict.el"))
 
 (defgroup moedict-faces nil
@@ -395,7 +398,7 @@ Return value is rendered string."
       (goto-char (point-min))))
   (moedict-message "查詢完成。"))
 
-(defun moedict ()
+(defun moedict (&optional init-input)
   (interactive)
   (if (null
        (helm :sources
@@ -406,10 +409,10 @@ Return value is rendered string."
                :action #'moedict-lookup-and-show-in-buffer
                :requires-pattern t
                )
+             :input (or "" init-input)
              :buffer moedict-candidate-buffer-name
              :prompt moedict-prompt))
       (moedict-message "找不到你輸入的這個單字喔！")))
-
 
 ;; ======================================================
 ;; Interactive Commands
@@ -421,11 +424,24 @@ Return value is rendered string."
                                (equal  '(underline t) face))
          )))
 
-(get-text-property (point) 'face)
+(defun moedict-try-to-get-vocabulary-at-point ()
+  (let ((pos (point)))
+    (cond ((moedict-point-at-underline-p)
+           (if (null (moedict-point-at-underline-p (1- pos)))
+               (setq pos (1+ pos)))
+           (buffer-substring-no-properties (previous-property-change pos)
+                                           (next-property-change pos)))
+          (t
+           ""))))
 
-(defun moedict:ret ()
-  (get-text-property (point) 'underline)
-  )
+(defun moedict:enter ()
+  (interactive)
+  (let ((vocabulary (moedict-try-to-get-vocabulary-at-point)))
+    (if (moedict-point-at-underline-p)
+        (moedict-lookup-and-show-in-buffer vocabulary)
+      (progn
+        (moedict vocabulary)
+        ))))
 
 (defun moedict:tab ()
   (interactive)
@@ -433,8 +449,8 @@ Return value is rendered string."
     ;; If already on underline
     (if (moedict-point-at-underline-p pos)
         (setq pos (next-property-change pos)))
-    (while (and (moedict-point-at-underline-p pos)
-                (not (null (next-property-change pos))))
+    (while (and (not (moedict-point-at-underline-p pos)) ;if current point have no underline
+                (next-property-change pos))
       (setq pos (next-property-change pos)))
     (goto-char pos)))
 
@@ -443,12 +459,11 @@ Return value is rendered string."
   (let ((pos (point)))
     ;; If already on underline
     (if (moedict-point-at-underline-p pos)
-        (setq pos (next-property-change pos)))
-    (while (and (moedict-point-at-underline-p pos)
-                (not (null (next-property-change pos))))
-      (setq pos (next-property-change pos)))
+        (setq pos (previous-property-change pos)))
+    (while (and (not (moedict-point-at-underline-p pos)) ;if current point have no underline
+                (previous-property-change pos))
+      (setq pos (previous-property-change pos)))
     (goto-char pos)))
-
 
 
 (provide 'moedict)
