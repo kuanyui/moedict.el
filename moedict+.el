@@ -30,8 +30,8 @@
 (require 'helm)
 
 (setq moedict-prompt "萌典：")
-(setq moedict-buffer-name "*[萌典]查詢結果*")
-(setq moedict-candidate-buffer-name "*[萌典]候選字*")
+(setq moedict-buffer-name "*[萌典] 查詢結果*")
+(setq moedict-candidate-buffer-name "*[萌典] 候選字*")
 (setq moedict-candidates-limit 200)
 (setq moedict-synonyms-tag (propertize "同" 'face 'moedict-syn/antonyms-tag))
 (setq moedict-antonyms-tag (propertize "反" 'face 'moedict-syn/antonyms-tag))
@@ -306,7 +306,6 @@ SUBEXP-DEPTH is 0 by default."
         (setq pos m)))
     (nreverse result)))
 
-(moedict-match-positions "「\\(.+?\\)」" "「哈囉」「科科」" 1)
 ;; ======================================================
 ;; Render
 ;; ======================================================
@@ -315,9 +314,7 @@ SUBEXP-DEPTH is 0 by default."
   `(let ((aaa (moedict--get-column row 'type)))
      (if aaa
          (concat " " (propertize (format "[%s]" aaa) 'face 'moedict-type))
-       "")
-     ))
-
+       "")))
 
 (defmacro moedict--render-def ()
   `(let* ((def (moedict--get-column row 'def))
@@ -344,7 +341,6 @@ SUBEXP-DEPTH is 0 by default."
                            moedict-synonyms-tag (propertize synonyms 'face 'moedict-synonyms)))
       (if antonyms (format "            %s %s"
                            moedict-antonyms-tag (propertize antonyms 'face 'moedict-antonyms))))))
-
 
 
 (defun moedict--render-rows (rows)
@@ -392,15 +388,19 @@ Return value is rendered string."
 ;; UI
 ;; ======================================================
 
-(defun moedict-lookup-and-show (vocabulary)
+(defun moedict-message (string)
+  (message (format "[萌典] %s" string)))
+
+(defun moedict-lookup-and-show-in-buffer (vocabulary)
   ""
-  (message "[萌典] 查詢中...")
+  (moedict-message "查詢中...")
   (let ((rendered-result (moedict-render vocabulary)))
     (with-temp-buffer-window moedict-buffer-name nil nil)
     (with-selected-window (get-buffer-window moedict-buffer-name)
       (let (buffer-read-only)
-        (insert rendered-result))))
-  (message "[萌典] 查詢完成。"))
+        (insert rendered-result))
+      (goto-char (point-min))))
+  (moedict-message "查詢完成。"))
 
 (defun moedict ()
   (interactive)
@@ -410,12 +410,12 @@ Return value is rendered string."
                :candidates (lambda () (moedict-get-candidates-list helm-pattern))
                :volatile t
                :candidate-number-limit moedict-candidates-limit
-               :action #'moedict-lookup-and-show
+               :action #'moedict-lookup-and-show-in-buffer
                :requires-pattern t
                )
              :buffer moedict-candidate-buffer-name
              :prompt moedict-prompt))
-      (message "[萌典] 找不到你輸入的這個單字喔！")))
+      (moedict-message "找不到你輸入的這個單字喔！")))
 
 
 (provide 'moedict+)
