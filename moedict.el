@@ -544,6 +544,13 @@ Return value is rendered string."
                  (moedict-set-current-vocabulary-to next))
         (message "已經是最新的項目！")))))
 
+(defun moedict/history-clean ()
+  (interactive)
+  (if (y-or-n-p "確定要清除歷史紀錄嗎？")
+      (progn (setq moedict--history nil)
+             (message "清除啦～"))
+    (message "不清除～")))
+
 (defun moedict-history-push (vocabulary)
   "Remove the existed same vocabulary in `moedict--history',"
   (setq moedict--current-vocabulary vocabulary)
