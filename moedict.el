@@ -36,6 +36,8 @@
 (setq moedict-synonyms-tag (propertize "同" 'face 'moedict-syn/antonyms-tag))
 (setq moedict-antonyms-tag (propertize "反" 'face 'moedict-syn/antonyms-tag))
 (defvar moedict-sqlite-stream nil)
+(setq moedict-try-to-get-vocabulary-max-length 4)
+(setq moedict-punctuations "[\n 。，！？；：．「」『』（）、【】《》〈〉—]")
 
 (defcustom moedict-mode-hook nil
   "Normal hook run when entering moedict-mode."
@@ -396,7 +398,7 @@ Return value is rendered string."
       (let (buffer-read-only)
         (insert rendered-result))
       (goto-char (point-min))))
-  (moedict-message "查詢完成。"))
+  (moedict-message "完成～"))
 
 (defun moedict (&optional init-input)
   (interactive)
@@ -406,17 +408,20 @@ Return value is rendered string."
                :candidates (lambda () (moedict-get-candidates-list helm-pattern))
                :volatile t
                :candidate-number-limit moedict-candidates-limit
-               :action #'moedict-lookup-and-show-in-buffer
+               :action (lambda (x) (moedict-lookup-and-show-in-buffer x)
+                         (kill-buffer moedict-candidate-buffer-name))
                :requires-pattern t
                )
-             :input (or "" init-input)
+             :input (or init-input "")
              :buffer moedict-candidate-buffer-name
              :prompt moedict-prompt))
       (moedict-message "找不到你輸入的這個單字喔！")))
 
+
 ;; ======================================================
 ;; Interactive Commands
 ;; ======================================================
+
 (defun moedict-point-at-underline-p (&optional point)
   (if (null point) (setq point (point)))
   (let ((face (get-text-property point 'face)))
@@ -425,23 +430,45 @@ Return value is rendered string."
          )))
 
 (defun moedict-try-to-get-vocabulary-at-point ()
-  (let ((pos (point)))
-    (cond ((moedict-point-at-underline-p)
-           (if (null (moedict-point-at-underline-p (1- pos)))
-               (setq pos (1+ pos)))
-           (buffer-substring-no-properties (previous-property-change pos)
-                                           (next-property-change pos)))
-          (t
-           ""))))
+  (let ((pos (point))
+        begin end)
+    (if (moedict-point-at-underline-p)
+        ;; [1] if at an underlined vocabulary.
+        (progn (if (null (moedict-point-at-underline-p (1- pos)))
+                   (setq pos (1+ pos)))
+               (buffer-substring-no-properties (previous-property-change pos)
+                                               (next-property-change pos)))
+      ;; If cursor is not at an underlined vocabulary,
+      ;; guess vocabulary according `moedict-punctuations' &
+      ;; `moedict-try-to-get-vocabulary-max-length'
+      (save-excursion
+        (search-backward-regexp moedict-punctuations nil t 1)
+        (setq begin (1+ (point)))
+        (right-char 1)
+        (search-forward-regexp moedict-punctuations nil t 1)
+        (setq end (1- (point)))
+        (message (format "%s" (list begin end)))
+        (if (<= (- end begin) moedict-try-to-get-vocabulary-max-length)
+            (format "%s" (buffer-substring begin end)) ; [2] got guessed vocabulary according punctuation
+          (if (moedict-if-a-valid-chinese-character (char-after pos))
+              (char-to-string (char-after pos))  ; [3] The single character at point
+            ""                                   ; [4] None of above
+            ))))))
+
+(defun moedict-if-a-valid-chinese-character (char)
+  "Not include punctuation."
+  (if (characterp char)
+      (setq char (char-to-string char)))
+  (and (string-match (rx (category chinese)) char)
+       (not (string-match moedict-punctuations char))))
 
 (defun moedict:enter ()
   (interactive)
   (let ((vocabulary (moedict-try-to-get-vocabulary-at-point)))
     (if (moedict-point-at-underline-p)
         (moedict-lookup-and-show-in-buffer vocabulary)
-      (progn
-        (moedict vocabulary)
-        ))))
+      (moedict vocabulary)
+      )))
 
 (defun moedict:tab ()
   (interactive)
