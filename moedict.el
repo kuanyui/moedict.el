@@ -33,11 +33,14 @@
 (setq moedict-buffer-name "*[萌典] 查詢結果*")
 (setq moedict-candidate-buffer-name "*[萌典] 候選字*")
 (setq moedict-candidates-limit 200)
+(setq moedict-history-buffer-name "*[萌典] 查詢歷史*")
 (setq moedict-synonyms-tag (propertize "同" 'face 'moedict-syn/antonyms-tag))
 (setq moedict-antonyms-tag (propertize "反" 'face 'moedict-syn/antonyms-tag))
 (defvar moedict-sqlite-stream nil)
 (setq moedict-try-to-get-vocabulary-max-length 4)
 (setq moedict-punctuations "[\n 。，！？；：．「」『』（）、【】《》〈〉—]")
+(defvar moedict--history nil "History list of current moedict buffer.")
+(defvar moedict--current-vocabulary nil "History list of current moedict buffer.")
 
 (defcustom moedict-mode-hook nil
   "Normal hook run when entering moedict-mode."
@@ -56,9 +59,6 @@
     (define-key map (kbd "<backtab>") 'moedict:shift+tab)
     map)
   "Keymap for Moedict major mode.")
-
-(defvar moedict-history nil
-  "History list of current moedict buffer.")
 
 (define-derived-mode moedict-mode nil "萌典"
   "Major mode for looking up Chinese vocabulary via Moedict API."
@@ -388,17 +388,21 @@ Return value is rendered string."
 (defun moedict-message (string)
   (message (format "[萌典] %s" string)))
 
-(defun moedict-lookup-and-show-in-buffer (vocabulary)
+(defun moedict-lookup-and-show-in-buffer (vocabulary &optional no-push-to-history)
   ""
-  (moedict-message "查詢中...")
-  (let ((rendered-result (moedict-render vocabulary)))
-    (with-temp-buffer-window moedict-buffer-name nil nil)
-    (with-selected-window (get-buffer-window moedict-buffer-name)
-      (moedict-mode)
-      (let (buffer-read-only)
-        (insert rendered-result))
-      (goto-char (point-min))))
-  (moedict-message "完成～"))
+  (when (stringp vocabulary)
+    (moedict-message "查詢中...")
+    (if no-push-to-history
+        'pass
+      (moedict-history-push vocabulary))
+    (let ((rendered-result (moedict-render vocabulary)))
+      (with-temp-buffer-window moedict-buffer-name nil nil)
+      (with-selected-window (get-buffer-window moedict-buffer-name)
+        (moedict-mode)
+        (let (buffer-read-only)
+          (insert rendered-result))
+        (goto-char (point-min))))
+    (moedict-message "完成～")))
 
 (defun moedict (&optional init-input)
   (interactive)
@@ -496,7 +500,75 @@ Return value is rendered string."
       (setq pos (previous-property-change pos)))
     (goto-char pos)))
 
+(defun moedict/history-show-list ()
+  (interactive)
+  (if (= (length moedict--history) 0)
+      (moedict-message "目前歷史紀錄是空的喔")
+    (if (null (helm :sources
+                    (helm-build-sync-source "請選擇單字："
+                      :candidates moedict--history
+                      :volatile t
+                      :action (lambda (x) (moedict-lookup-and-show-in-buffer x)
+                                (kill-buffer moedict-history-buffer-name))
+                      )
+                    :buffer moedict-history-buffer-name
+                    :prompt moedict-prompt))
+        (moedict-message "取消動作！")
+      )))
 
+(defun moedict/history-previous ()
+  (interactive)
+  (if (= (length moedict--history) 0)
+      (moedict-message "目前歷史紀錄是空的喔")
+    (let ((vocabulary (moedict-history-get-previous-vocabulary)))
+      (if vocabulary
+          (moedict-lookup-and-show-in-buffer vocabulary :no-push-history)
+        (message "已經是最舊的項目！")))))
+
+(defun moedict/history-next ()
+  (interactive)
+  (if (= (length moedict--history) 0)
+      (moedict-message "目前歷史紀錄是空的喔")
+    (let ((vocabulary (moedict-history-get-next-vocabulary)))
+      (if vocabulary
+          (moedict-lookup-and-show-in-buffer vocabulary :no-push-history)
+        (message "已經是最新的項目！")))))
+
+(defun moedict-history-push (vocabulary)
+  "Remove the existed same vocabulary in `moedict--history',"
+  (setq moedict--current-vocabulary vocabulary)
+  (setq moedict--history (delete vocabulary moedict--history))
+  (push vocabulary moedict--history))
+
+(defun moedict-history-get-previous-vocabulary ()
+  "Get previous vocabulary then setq it to `moedict--current-vocabulary'
+Return value is string or nil"
+  (let* ((n (1- (- (length moedict--history)
+                   (length (member moedict--current-vocabulary moedict--history)))))
+         (previous-vocabulary (if (>= n 0) (nth n moedict--history) nil)))
+    (if previous-vocabulary
+        (setq moedict--current-vocabulary previous-vocabulary))
+    previous-vocabulary))
+
+(defun moedict-history-get-next-vocabulary ()
+  "Get next vocabulary then setq it to `moedict--current-vocabulary'
+Return value is string or nil"
+  (if (equal (car moedict--history) moedict--current-vocabulary)
+      ;; if at the first history item
+      (prog1 (car moedict--history)
+        (setq moedict--current-vocabulary (cadr moedict--history)))
+    ;; return the next item
+    (prog1 (car (member moedict--current-vocabulary moedict--history))
+      (setq moedict--current-vocabulary
+            (cadr (member moedict--current-vocabulary moedict--history)))
+      )))
+
+
+moedict--current-vocabulary
+(member moedict--current-vocabulary moedict--history)
+(moedict-history-get-previous-vocabulary)
+(moedict-history-get-next-vocabulary)
+(setq moedict--history '("一" "二" "三"))
 
 
 (provide 'moedict)
