@@ -1,9 +1,9 @@
 ;;; moedict+.el ---                                  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2016  kuanyui
+;; Copyright (C) 2016 ono hiroko
 
-;; Author: kuanyui <azazabc123@gmail.com>
-;; Keywords: 
+;; Author: ono hiroko (kuanyui) <azazabc123@gmail.com>
+;; Keywords: tools
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -274,14 +274,14 @@ Don't borthered by the serial numbers."
 
 
 
-(defun moedict-concat (&rest args)
-  "Ignore nil, seperator is \n."
+(defun moedict-concat-with-newline (&rest args)
+  "Ignore nil, seperator is \\n."
   (mapconcat #'identity
              (remove-if #'null args)
              "\n"))
 
-(defun moedict-mapconcat (list)
-  "Ignore nil, seperator is \n\n."
+(defun moedict-mapconcat-with-2-newlines (list)
+  "Ignore nil, seperator is \\n\\n."
   (mapconcat #'identity
              (remove-if #'null list)
              "\n\n"))
@@ -299,11 +299,11 @@ Don't borthered by the serial numbers."
 ;; ======================================================
 
 (defmacro moedict--render-type ()
-  `(let ((type (moedict--get-column row 'type)))
-     (if type
-         (concat "\n\n " (propertize (format "[%s]" type) 'face 'moedict-type))
+  `(let ((aaa (moedict--get-column row 'type)))
+     (if aaa
+         (concat " " (propertize (format "[%s]" aaa) 'face 'moedict-type))
        "")
-  ))
+     ))
 
 
 (defmacro moedict--render-def ()
@@ -314,22 +314,22 @@ Don't borthered by the serial numbers."
           (link (moedict--get-column row 'link))
           (synonyms (moedict--get-column row 'synonyms))
           (antonyms (moedict--get-column row 'antonyms)))
-     (moedict-concat
-       (if def      (format "    %s" (propertize def 'face 'moedict-def)))
-       (if example  (format "        %s" (propertize example 'face 'moedict-example)))
-       (if quote    (format "        %s" (propertize quote 'face 'moedict-quote)))
-       (if link     (format "        %s" (propertize link 'face 'moedict-link)))
-       (if synonyms (format "            %s %s"
-                            moedict-synonyms-tag (propertize synonyms 'face 'moedict-synonyms)))
-       (if antonyms (format "            %s %s"
-                            moedict-antonyms-tag (propertize antonyms 'face 'moedict-antonyms))))))
+     (moedict-concat-with-newline
+      (if def      (format "    %s" (propertize def 'face 'moedict-def)))
+      (if example  (format "        %s" (propertize example 'face 'moedict-example)))
+      (if quote    (format "        %s" (propertize quote 'face 'moedict-quote)))
+      (if link     (format "        %s" (propertize link 'face 'moedict-link)))
+      (if synonyms (format "            %s %s"
+                           moedict-synonyms-tag (propertize synonyms 'face 'moedict-synonyms)))
+      (if antonyms (format "            %s %s"
+                           moedict-antonyms-tag (propertize antonyms 'face 'moedict-antonyms))))))
 
 
 
 (defun moedict--render-rows (rows)
   "ROWS is the query result retrieved from `moedict-query-vocabulary',
 Return value is rendered string."
-  (moedict-mapconcat
+  (moedict-mapconcat-with-2-newlines
    (cons
     ;; car
     (if (eq :null (moedict--get-column (car rows) 'radical))
@@ -345,7 +345,7 @@ Return value is rendered string."
          (cond ((not (equal (moedict--get-column row 'bopomofo) bopomofo))
                 (setq bopomofo (moedict--get-column row 'bopomofo))
                 (setq type (moedict--get-column row 'type))
-                (format "%s %s %s %s%s\n\n%s"
+                (format "%s %s %s %s\n\n%s\n\n%s"
                         (propertize (moedict--get-column row 'title) 'face 'moedict-title)
                         (propertize (moedict--get-column row 'bopomofo) 'face 'moedict-bopomofo)
                         (propertize (moedict--get-column row 'pinyin) 'face 'moedict-pinyin)
@@ -354,14 +354,17 @@ Return value is rendered string."
                         (moedict--render-def)))
                ((not (equal (moedict--get-column row 'type) type))
                 (setq type (moedict--get-column row 'type))
-                (moedict--render-type)
-                (moedict--render-def))
+                ;; Because some vocabulary have no type:
+                (concat (moedict--render-type)
+                        "\n\n"
+                        (moedict--render-def)))
                (t
                 (moedict--render-def))))
        (moedict--replace-null-with-nil rows))
       ))))
 
 (defun moedict-render (vocabulary)
+  "Return rendered string"
   (moedict--render-rows (moedict-query-vocabulary vocabulary)))
 
 ;; ======================================================
@@ -370,29 +373,28 @@ Return value is rendered string."
 
 (defun moedict-lookup-and-show (vocabulary)
   ""
-  (if (null vocabulary)
-      (message "[萌典] 找不到你輸入的這個單字喔！")
-    (progn
-      (message "[萌典] 查詢中...")
-      (let ((rendered-result (moedict-render vocabulary)))
-        (with-temp-buffer-window moedict-buffer-name nil nil)
-        (with-selected-window (get-buffer-window moedict-buffer-name)
-          (let (buffer-read-only)
-            (insert rendered-result))))
-      (message "[萌典] 查詢完成。"))))
+  (message "[萌典] 查詢中...")
+  (let ((rendered-result (moedict-render vocabulary)))
+    (with-temp-buffer-window moedict-buffer-name nil nil)
+    (with-selected-window (get-buffer-window moedict-buffer-name)
+      (let (buffer-read-only)
+        (insert rendered-result))))
+  (message "[萌典] 查詢完成。"))
 
 (defun moedict ()
   (interactive)
-  (helm :sources
-      (helm-build-sync-source "請輸入您欲查詢的單字："
-        :candidates (lambda () (moedict-get-candidates-list helm-pattern))
-        :volatile t
-        :candidate-number-limit moedict-candidates-limit
-        :action #'moedict-lookup-and-show
-        )
-      :buffer moedict-candidate-buffer-name
-      :prompt moedict-prompt))
-
+  (if (null
+       (helm :sources
+             (helm-build-sync-source "請選擇您欲查詢的單字："
+               :candidates (lambda () (moedict-get-candidates-list helm-pattern))
+               :volatile t
+               :candidate-number-limit moedict-candidates-limit
+               :action #'moedict-lookup-and-show
+               :requires-pattern t
+               )
+             :buffer moedict-candidate-buffer-name
+             :prompt moedict-prompt))
+      (message "[萌典] 找不到你輸入的這個單字喔！")))
 
 
 (provide 'moedict+)
