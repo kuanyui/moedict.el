@@ -51,19 +51,21 @@
   (let ((map (make-sparse-keymap)))
     ;; Element insertion
     (define-key map (kbd "Q")         'quit-window)
+    (define-key map (kbd "SPC")       'moedict)
+    (define-key map (kbd "l")         'moedict)
     (define-key map (kbd "?")         'describe-mode)
     (define-key map (kbd "<enter>")   'moedict:enter)
     (define-key map (kbd "RET")       'moedict:enter)
     (define-key map (kbd "<tab>")     'moedict:tab)
     (define-key map (kbd "TAB")       'moedict:tab)
     (define-key map (kbd "<backtab>") 'moedict:shift+tab)
-    (define-key map (kbd "h") 'moedict/history-show-list)
-    (define-key map (kbd "[") 'moedict/history-previous)
-    (define-key map (kbd "q") 'moedict/history-previous)
-    (define-key map (kbd "^") 'moedict/history-previous)
-    (define-key map (kbd "C-c C-b") 'moedict/history-previous)
-    (define-key map (kbd "]") 'moedict/history-next)
-    (define-key map (kbd "C-c C-f") 'moedict/history-next)
+    (define-key map (kbd "h")         'moedict/history-show-list)
+    (define-key map (kbd "[")         'moedict/history-previous)
+    (define-key map (kbd "q")         'moedict/history-previous)
+    (define-key map (kbd "^")         'moedict/history-previous)
+    (define-key map (kbd "C-c C-b")   'moedict/history-previous)
+    (define-key map (kbd "]")         'moedict/history-next)
+    (define-key map (kbd "C-c C-f")   'moedict/history-next)
     map)
   "Keymap for Moedict major mode.")
 
@@ -453,13 +455,12 @@ Return value is rendered string."
       ;; `moedict-try-to-get-vocabulary-max-length'
       (save-excursion
         (search-backward-regexp moedict-punctuations nil t 1)
-        (right-char 1)
+        (if (not (bolp)) (right-char 1))
         (setq begin (point))
         (search-forward-regexp moedict-punctuations nil t 1)
         (setq end (1- (point)))
-        (message (format "%s" (list begin end)))
         (if (<= (- end begin) moedict-try-to-get-vocabulary-max-length)
-            (format "%s" (buffer-substring begin end)) ; [2] got guessed vocabulary according punctuation
+            (format "%s" (buffer-substring-no-properties begin end)) ; [2] got guessed vocabulary according punctuation
           (moedict-try-to-get-single-char-at-point pos) ; [3] Try to get single character at point
           )))))
 
@@ -566,7 +567,6 @@ Return value is string or nil"
 
 (defun moedict-set-current-vocabulary-to (value)
   (setq moedict--current-vocabulary value))
-
 
 (provide 'moedict)
 ;;; moedict+.el ends here
