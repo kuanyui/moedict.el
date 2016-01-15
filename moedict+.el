@@ -291,9 +291,22 @@ Don't borthered by the serial numbers."
   (mapcar (lambda (x)
             (mapcar (lambda (y) (if (eq y :null) nil y))
                     x))
-          list)
-  )
+          list))
 
+(defun moedict-match-positions (regexp str &optional subexp-depth)
+  "Get all matched regexp groups positions grabbed with \\(\\)
+e.g. ((1 . 5) (8 . 10))"
+  (if (null subexp-depth)
+      (setq subexp-depth 0))
+  (let ((pos 0) res)
+    (while (and (string-match regexp str pos)
+                (< pos (length str)))
+      (let ((m (match-end subexp-depth)))
+        (push (cons (match-beginning subexp-depth) (match-end subexp-depth)) res)
+        (setq pos m)))
+    (nreverse res)))
+
+(moedict-match-positions "「\\(.+?\\)」" "「哈囉」「科科」" 1)
 ;; ======================================================
 ;; Render
 ;; ======================================================
@@ -314,11 +327,19 @@ Don't borthered by the serial numbers."
           (link (moedict--get-column row 'link))
           (synonyms (moedict--get-column row 'synonyms))
           (antonyms (moedict--get-column row 'antonyms)))
+
+     (when link
+       (add-text-properties 0 (length link) '(face moedict-link) link)
+       (mapc (lambda (begin-end)
+               (add-face-text-property (car begin-end) (cdr begin-end) '(underline t) t link))
+             (moedict-match-positions "「\\(.+?\\)」" link 1)
+             ))
+
      (moedict-concat-with-newline
       (if def      (format "    %s" (propertize def 'face 'moedict-def)))
       (if example  (format "        %s" (propertize example 'face 'moedict-example)))
       (if quote    (format "        %s" (propertize quote 'face 'moedict-quote)))
-      (if link     (format "        %s" (propertize link 'face 'moedict-link)))
+      (if link     (format "        %s" link))
       (if synonyms (format "            %s %s"
                            moedict-synonyms-tag (propertize synonyms 'face 'moedict-synonyms)))
       (if antonyms (format "            %s %s"
