@@ -253,7 +253,7 @@ WHERE entries.title = %s
 " (esqlite-format-text vocabulary))))
 
 ;; ======================================================
-;; Tools
+;; Low-level & Internal Tools
 ;; ======================================================
 
 (defun moedict--get-column (row attr)
@@ -414,10 +414,11 @@ Return value is rendered string."
     (moedict-message "完成～")))
 
 (defun moedict (&optional init-input)
+  "查萌典。"
   (interactive)
   (if (null
        (helm :sources
-             (helm-build-sync-source "請選擇您欲查詢的單字："
+             (helm-build-sync-source "[萌典] 請輸入您欲查詢的單字："
                :candidates (lambda () (moedict-get-candidates-list helm-pattern))
                :volatile t
                :candidate-number-limit moedict-candidates-limit
@@ -428,11 +429,25 @@ Return value is rendered string."
              :input (or init-input "")
              :buffer moedict-candidate-buffer-name
              :prompt moedict-prompt))
-      (moedict-message "找不到你輸入的這個單字喔！")))
+      (moedict-message "找不到結果，取消～")))
 
+(defun moedict-region (begin end)
+  "用萌典查詢選取範圍內的文字。"
+  (interactive "r")
+  (if (not (region-active-p))
+      (moedict-message "請先反白選取您欲查詢的單字後，再執行此命令！")
+    (moedict (buffer-substring-no-properties begin end))))
+
+(defun moedict-smart (&optional begin end)
+  "功能同 `moedict-lookup-region' ，但會自動檢查目前的選取狀態，
+如果處於選取狀態就查詢選取範圍內的字串，否則就直接呼叫 `moedict'"
+  (interactive "r")
+  (if (region-active-p)
+      (moedict (buffer-substring-no-properties begin end))
+    (moedict)))
 
 ;; ======================================================
-;; Interactive Commands
+;; Tools for Interactive Commands
 ;; ======================================================
 
 (defun moedict-point-at-underline-p (&optional point)
@@ -478,6 +493,10 @@ Return value is rendered string."
   (and (string-match (rx (category chinese)) char)
        (not (string-match moedict-punctuations char))))
 
+;; ======================================================
+;; Commands for Keys
+;; ======================================================
+
 (defun moedict:enter ()
   (interactive)
   (let ((vocabulary (moedict-try-to-get-vocabulary-at-point)))
@@ -507,6 +526,10 @@ Return value is rendered string."
                 (previous-property-change pos))
       (setq pos (previous-property-change pos)))
     (goto-char pos)))
+
+;; ======================================================
+;; History
+;; ======================================================
 
 (defun moedict/history-show-list ()
   (interactive)
