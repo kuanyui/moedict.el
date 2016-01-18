@@ -1,9 +1,12 @@
 ;;; moedict.el ---                                  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2016 ono hiroko
+;; Copyright (C) 2014, 2016 ono hiroko
 
 ;; Author: ono hiroko (kuanyui) <azazabc123@gmail.com>
 ;; Keywords: tools
+;; Package-Requires: ((emacs "24.3") (helm "1.9.1") (esqlite "0.3.1"))
+;; X-URL: https://github.com/kuanyui/moedict.el
+;; Version: {{VERSION}}
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -20,6 +23,11 @@
 
 ;;; Commentary:
 
+;; Because the answer of Universe is 42, and the line number of this
+;; file MUST be 689, I cannot write a complete README in here.
+;;
+;; If need help, please visit https://github.com/kuanyui/moedict.el
+
 ;;; Code:
 
 ;; ======================================================
@@ -28,29 +36,46 @@
 (require 'esqlite)
 (require 'helm)
 (require 'org-table)
+(require 'cl)
+(require 'url)
 
-(setq moedict-prompt "萌典：")
-(setq moedict-buffer-name "*[萌典] 查詢結果*")
-(setq moedict-help-buffer-name "*[萌典] 幫助視窗*")
-(setq moedict-candidate-buffer-name "*[萌典] 候選字*")
-(setq moedict-candidates-limit 200)
-(setq moedict-history-buffer-name "*[萌典] 查詢歷史*")
-(setq moedict-synonyms-tag (propertize "同" 'face 'moedict-syn/antonyms-tag))
-(setq moedict-antonyms-tag (propertize "反" 'face 'moedict-syn/antonyms-tag))
-(defvar moedict-sqlite-stream nil)
-(setq moedict-try-to-get-vocabulary-max-length 4)
-(setq moedict-punctuations "[ \n。，！？；：．「」『』（）、【】《》〈〉—]")
-(defvar moedict--history nil "History list of current moedict buffer.")
-(defvar moedict--current-vocabulary nil "History list of current moedict buffer.")
+(defconst moedict-files-directory (file-name-directory load-file-name))
+
+(defvar moedict-dictionary-file-path
+  (concat moedict-files-directory "dict.sqlite3")
+  "萌典 sqlite3 字典檔的檔案路令")
+
+(defvar moedict-dictionary-source-url
+  "https://raw.githubusercontent.com/kuanyui/moedict.el/master/dict.sqlite3.xz"
+  "萌典字典檔的 .xz 下載連結")
+
+(defvar moedict-prompt "萌典：")
+(defvar moedict-buffer-name "*[萌典] 查詢結果*")
+(defvar moedict-help-buffer-name "*[萌典] 幫助視窗*")
+(defvar moedict-candidate-buffer-name "*[萌典] 候選字*")
+(defvar moedict-history-buffer-name "*[萌典] 查詢歷史*")
+(defvar moedict-synonyms-tag (propertize "同" 'face 'moedict-syn/antonyms-tag))
+(defvar moedict-antonyms-tag (propertize "反" 'face 'moedict-syn/antonyms-tag))
+(defvar moedict-sqlite-stream nil "DO NOT CHANGE ME!")
+(defvar moedict-punctuations "[ \n。，！？；：．「」『』（）、【】《》〈〉—]")
+(defvar moedict--history nil "History list of current moedict buffer. DON'T SETQ ME.")
+(defvar moedict--current-vocabulary nil
+  "History list of current moedict buffer. DON'T SETQ ME YOU IDIOT")
+
+(defcustom moedict-candidates-limit 200
+  "查詢時所列出的候選字最大數量"
+  :type 'integer :group 'moedict)
+
+(defvar moedict-try-to-get-vocabulary-max-length 4
+  "嘗試猜測字彙時，猜測字彙的最大長度"
+  :type 'integer :group 'moedict)
 
 (defcustom moedict-mode-hook nil
   "Normal hook run when entering moedict-mode."
-  :type 'hook
-  :group 'moedict)
+  :type 'hook :group 'moedict)
 
 (defvar moedict-mode-map
   (let ((map (make-sparse-keymap)))
-    ;; Element insertion
     (define-key map (kbd "Q")         'moedict/exit)
     (define-key map (kbd "SPC")       'moedict)
     (define-key map (kbd "l")         'moedict)
@@ -73,18 +98,16 @@
   "Keymap for Moedict major mode.")
 
 (define-derived-mode moedict-mode nil "萌典"
-  "Major mode for looking up Chinese vocabulary via Moedict API."
+  "Moedict (萌典) Client for Emacs"
   (set (make-local-variable 'buffer-read-only) t))
 
 (defgroup moedict nil
-  "Major mode for looking up Chinese vocabulary via Moedict API."
-  :prefix "moedict"
-  :link '(url-link "http://github.com/kuanyui/moedict.el"))
+  "Moedict (萌典) Client for Emacs"
+  :prefix "moedict" :link '(url-link "http://github.com/kuanyui/moedict.el"))
 
 (defgroup moedict-faces nil
-  "Faces used in Moedict-mode"
-  :group 'moedict
-  :group 'faces)
+  "Faces used in `moedict-mode'"
+  :group 'moedict :group 'faces)
 
 (defface moedict-title
   '((((class color) (background light)) (:foreground "#ff8700" :bold t :height 1.2))
@@ -150,31 +173,46 @@
   '((((class color) (background light)) (:foreground "#525252"))
     (((class color) (background dark)) (:foreground "#cdcdcd")))
   "Face for example. ex: Example"
-  :group 'moedict)
+  :group 'moedict-faces)
 
 (defface moedict-link
   '((((class color) (background light)) (:foreground "#00a775"))
     (((class color) (background dark)) (:foreground "#00d7af")))
   "Face for link. ex:「見...等條」"
-  :group 'moedict)
+  :group 'moedict-faces)
 
 (defface moedict-synonyms
   '((((class color) (background light)) (:foreground "#9a08ff"))
     (((class color) (background dark)) (:foreground "#aa71ff")))
   "Face for synonyms."
-  :group 'moedict)
+  :group 'moedict-faces)
 
 (defface moedict-antonyms
   '((((class color) (background light)) (:foreground "#9a08ff"))
     (((class color) (background dark)) (:foreground "#aa71ff")))
   "Face for antonyms."
-  :group 'moedict)
+  :group 'moedict-faces)
 
 (defface moedict-syn/antonyms-tag
   '((((class color) (background light)) (:foreground "#ffffff" :background "#9a08ff"))
     (((class color) (background dark)) (:foreground "#7008a0" :background "#eeaeff")))
   "Face for syn/antonyms-tag. ex: [同]"
-  :group 'moedict)
+  :group 'moedict-faces)
+
+;; ======================================================
+;; Download Dictionary File
+;; ======================================================
+
+(defun moedict-check-dictionary-file ()
+  "If dictionary file is not existed, download & uncompress it with xz."
+  (interactive)
+  (if (not (file-exists-p moedict-dictionary-file-path))
+      (if (not (executable-find "xz"))
+          (moedict-message "您的系統上沒有發現xz這個指令，請安裝後再重試一次。
+Command 'xz' not found on your system. Please install it then try again")
+        (progn
+          (url-copy-file moedict-dictionary-source-url moedict-dictionary-file-path)
+          (shell-command (format "xz -kdvv %s.xz" moedict-dictionary-file-path))))))
 
 ;; ======================================================
 ;; Query
@@ -184,16 +222,16 @@
   (if (not (process-live-p moedict-sqlite-stream))
       (setq moedict-sqlite-stream (esqlite-stream-open "dict.sqlite3"))))
 
-(defmacro moedict-query (query-string)
+(defmacro moedict-query (sql-query-string)
   `(progn
      (moedict-open-sqlite-process)
-     (esqlite-stream-read moedict-sqlite-stream ,query-string)))
+     (esqlite-stream-read moedict-sqlite-stream ,sql-query-string)))
 
-(defmacro moedict-query-with-limit (query-string)
+(defmacro moedict-query-with-limit (sql-query-string)
   `(progn
      (moedict-open-sqlite-process)
      (esqlite-stream-read moedict-sqlite-stream
-                          (format "%s LIMIT %s" ,query-string ,moedict-candidates-limit))))
+                          (format "%s LIMIT %s" ,sql-query-string ,moedict-candidates-limit))))
 
 (defun moedict-get-candidates-list (string)
   (cl-remove-if
@@ -248,8 +286,7 @@ Don't borthered by the serial numbers."
                      (synonyms                 . 12)
                      (antonyms                 . 13)
                      (link                     . 14))))
-   row
-   ))
+   row))
 
 (defun moedict-mapconcat-with-newline (list)
   "Ignore nil, seperator is \\n."
@@ -370,7 +407,7 @@ Return value is rendered string."
   (message (format "[萌典] %s" string)))
 
 (defun moedict-lookup-and-show-in-buffer (vocabulary &optional no-push-to-history)
-  ""
+  "Hello"
   (when (stringp vocabulary)
     (moedict-message "查詢中...")
     (if no-push-to-history
@@ -388,6 +425,7 @@ Return value is rendered string."
 (defun moedict (&optional init-input)
   "查萌典。"
   (interactive)
+  (moedict-check-dictionary-file)
   (if (null
        (helm :sources
              (helm-build-sync-source "[萌典] 請輸入您欲查詢的單字："
@@ -406,6 +444,7 @@ Return value is rendered string."
 (defun moedict/region (begin end)
   "用萌典查詢選取範圍內的文字。"
   (interactive "r")
+  (moedict-check-dictionary-file)
   (if (not (region-active-p))
       (moedict-message "請先反白選取您欲查詢的單字後，再執行此命令！")
     (moedict (buffer-substring-no-properties begin end))))
@@ -414,6 +453,7 @@ Return value is rendered string."
   "功能同 `moedict-lookup-region' ，但會自動檢查目前的選取狀態，
 如果處於選取狀態就查詢選取範圍內的字串，否則就直接呼叫 `moedict'"
   (interactive "r")
+  (moedict-check-dictionary-file)
   (if (region-active-p)
       (moedict (buffer-substring-no-properties begin end))
     (moedict)))
@@ -421,6 +461,7 @@ Return value is rendered string."
 (defun moedict/last-vocabulary ()
   "開啟萌典查詢界面，並以目前條目為預設輸入"
   (interactive)
+  (moedict-check-dictionary-file)
   (moedict moedict--current-vocabulary))
 
 ;; ======================================================
@@ -453,15 +494,13 @@ Return value is rendered string."
         (setq end (1- (point)))
         (if (<= (- end begin) moedict-try-to-get-vocabulary-max-length)
             (format "%s" (buffer-substring-no-properties begin end)) ; [2] got guessed vocabulary according punctuation
-          (moedict-try-to-get-single-char-at-point pos) ; [3] Try to get single character at point
-          )))))
+          (moedict-try-to-get-single-char-at-point pos)))))) ; [3] Try to get single character at point
 
 (defun moedict-try-to-get-single-char-at-point (&optional pos)
   (if (null pos) (setq pos (point)))
   (if (moedict-if-a-valid-chinese-character (char-after pos))
       (char-to-string (char-after pos))
-    ""
-    ))
+    ""))
 
 (defun moedict-if-a-valid-chinese-character (char)
   "Not include punctuation."
@@ -591,8 +630,7 @@ Return value is rendered string."
                       )
                     :buffer moedict-history-buffer-name
                     :prompt moedict-prompt))
-        (moedict-message "取消動作！")
-      )))
+        (moedict-message "取消動作！"))))
 
 (defun moedict/history-previous ()
   (interactive)
@@ -630,8 +668,7 @@ Return value is rendered string."
 (defun moedict-history-get-previous-vocabulary ()
   "Get previous vocabulary.
 Return value is string or nil"
-  (cadr (member moedict--current-vocabulary moedict--history))
-  )
+  (cadr (member moedict--current-vocabulary moedict--history)))
 
 (defun moedict-history-get-next-vocabulary ()
   "Get next vocabulary in history.
@@ -646,4 +683,6 @@ Return value is string or nil"
   (setq moedict--current-vocabulary value))
 
 (provide 'moedict)
+;; The ultimate answer of life, Universe, and everything is 42,
+;; the ultimate answer of Taiwan is 689.
 ;;; moedict+.el ends here
