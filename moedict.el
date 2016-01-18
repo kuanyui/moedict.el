@@ -243,10 +243,9 @@ Command 'xz' not found on your system. Please install it then try again")
 (defun moedict-get-candidates-list (string)
   (cl-remove-if
    (lambda (x) (string-prefix-p "{" x))
-   (mapcon #'car
-           (moedict-query-with-limit
-            (format "SELECT title FROM entries WHERE title LIKE %s"
-                    (esqlite-format-text (concat string "%")))))))
+   (mapcon #'car (moedict-query-with-limit
+                  (format "SELECT title FROM entries WHERE title LIKE %s"
+                          (esqlite-format-text (concat string "%")))))))
 
 (defun moedict-query-vocabulary (vocabulary)
   "title, radical, stroke_count, non_radical_stroke_count,
@@ -561,6 +560,7 @@ Return value is rendered string."
               moedict-candidate-buffer-name)))
 
 (defun moedict/open-website ()
+  (interactive)
   (if moedict--current-vocabulary
       (browse-url-default-browser (format "https://www.moedict.tw/%s" moedict--current-vocabulary))
     (browse-url-default-browser "https://www.moedict.tw/"))
@@ -585,8 +585,7 @@ Return value is rendered string."
    (propertize "* 萌え萌えキュン的萌典說明書\n" 'face 'bold)
    "以下按鍵可以在萌典的 buffer 中使用：\n
 | 函數名稱 | 按鍵 | 描述 |
-|----------|------|------|
-"
+|----------|------|------|\n"
    (mapconcat
     (lambda (x)
       (format "| %s | %s | %s |"
