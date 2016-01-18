@@ -20,7 +20,6 @@
 
 ;;; Commentary:
 
-
 ;;; Code:
 
 ;; ======================================================
@@ -28,6 +27,7 @@
 ;; ======================================================
 (require 'esqlite)
 (require 'helm)
+(require 'org-table)
 
 (setq moedict-prompt "萌典：")
 (setq moedict-buffer-name "*[萌典] 查詢結果*")
@@ -50,22 +50,24 @@
 (defvar moedict-mode-map
   (let ((map (make-sparse-keymap)))
     ;; Element insertion
-    (define-key map (kbd "Q")         'quit-window)
+    (define-key map (kbd "Q")         'moedict/exit)
     (define-key map (kbd "SPC")       'moedict)
     (define-key map (kbd "l")         'moedict)
-    (define-key map (kbd "?")         'describe-mode)
+    (define-key map (kbd "h")         'moedict/help)
+    (define-key map (kbd "?")         'moedict/help)
     (define-key map (kbd "<enter>")   'moedict:enter)
     (define-key map (kbd "RET")       'moedict:enter)
     (define-key map (kbd "<tab>")     'moedict:tab)
     (define-key map (kbd "TAB")       'moedict:tab)
     (define-key map (kbd "<backtab>") 'moedict:shift+tab)
-    (define-key map (kbd "h")         'moedict/history-show-list)
+    (define-key map (kbd "H")         'moedict/history-show-list)
     (define-key map (kbd "[")         'moedict/history-previous)
     (define-key map (kbd "q")         'moedict/history-previous)
     (define-key map (kbd "^")         'moedict/history-previous)
     (define-key map (kbd "C-c C-b")   'moedict/history-previous)
     (define-key map (kbd "]")         'moedict/history-next)
     (define-key map (kbd "C-c C-f")   'moedict/history-next)
+    (define-key map (kbd "o")         'moedict/open-website)
     map)
   "Keymap for Moedict major mode.")
 
@@ -278,8 +280,6 @@ Don't borthered by the serial numbers."
    row
    ))
 
-
-
 (defun moedict-concat-with-newline (&rest args)
   "Ignore nil, seperator is \\n."
   (mapconcat #'identity
@@ -431,20 +431,25 @@ Return value is rendered string."
              :prompt moedict-prompt))
       (moedict-message "找不到結果，取消～")))
 
-(defun moedict-region (begin end)
+(defun moedict/region (begin end)
   "用萌典查詢選取範圍內的文字。"
   (interactive "r")
   (if (not (region-active-p))
       (moedict-message "請先反白選取您欲查詢的單字後，再執行此命令！")
     (moedict (buffer-substring-no-properties begin end))))
 
-(defun moedict-smart (&optional begin end)
+(defun moedict/smart (&optional begin end)
   "功能同 `moedict-lookup-region' ，但會自動檢查目前的選取狀態，
 如果處於選取狀態就查詢選取範圍內的字串，否則就直接呼叫 `moedict'"
   (interactive "r")
   (if (region-active-p)
       (moedict (buffer-substring-no-properties begin end))
     (moedict)))
+
+(defun moedict/current-as-init ()
+  "開啟萌典查詢界面，並以目前條目為預設輸入"
+  (interactive)
+  (moedict moedict--current-vocabulary))
 
 ;; ======================================================
 ;; Tools for Interactive Commands
@@ -497,13 +502,15 @@ Return value is rendered string."
 ;; Commands for Keys
 ;; ======================================================
 
-(defun moedict:enter ()
-  (interactive)
-  (let ((vocabulary (moedict-try-to-get-vocabulary-at-point)))
-    (if (moedict-point-at-underline-p)
-        (moedict-lookup-and-show-in-buffer vocabulary)
-      (moedict vocabulary)
-      )))
+(defun moedict:enter (&optional begin end)
+  (interactive "r")
+  (if (region-active-p)
+      (moedict (buffer-substring-no-properties begin end))
+    (let ((vocabulary (moedict-try-to-get-vocabulary-at-point)))
+      (if (moedict-point-at-underline-p)
+          (moedict-lookup-and-show-in-buffer vocabulary)
+        (moedict vocabulary)
+        ))))
 
 (defun moedict:tab ()
   (interactive)
@@ -528,7 +535,74 @@ Return value is rendered string."
     (goto-char pos)))
 
 ;; ======================================================
-;; History
+;; Misc Commands :: 有的沒的命令
+;; ======================================================
+
+(defun moedict/exit ()
+  "Kill all moedict buffers."
+  (interactive)
+  (mapc (lambda (x)
+          (bury-buffer x)
+          (kill-buffer x))
+        (list moedict-buffer-name
+              moedict-history-buffer-name
+              moedict-candidate-buffer-name)))
+
+(defun moedict/open-website ()
+  (if moedict--current-vocabulary
+      (browse-url-default-browser (format "https://www.moedict.tw/%s" moedict--current-vocabulary))
+    (browse-url-default-browser "https://www.moedict.tw/"))
+  (moedict-message "開啟網頁版中..."))
+
+(defun moedict/help ()
+  (interactive)
+  (with-selected-window (get-buffer-window (help-buffer))
+    (let (buffer-read-only)
+      (goto-char (point-max))
+      (previous-line)
+      (beginning-of-line)
+      (delete-region (point-min) (point))
+      (insert
+       (with-temp-buffer
+         (insert (moedict-get-help-string))
+         (org-table-align)
+         (buffer-string)
+         )
+       "\n"
+       ))))
+
+(defun moedict-get-help-string ()
+  (concat
+   (propertize "* 萌え萌え萌典說明書\n" 'face 'bold)
+   "
+| 函數名稱 | 按鍵 | 描述 |
+|----------|------|------|
+"
+   (mapconcat
+    (lambda (x)
+      (format "| %s | %s | %s |"
+              (propertize (symbol-name (car x)) 'face 'font-lock-keyword-face) ;command name
+              (mapconcat            ;key-binding
+               (lambda (a)
+                 (propertize (key-description a) 'face 'font-lock-constant-face))
+               (where-is-internal (car x)) ", ")  ; (key-binding list)
+              (cdr x)))                   ;description
+    '((moedict/exit              . "關掉所有萌典相關視窗跟buffer")
+      (moedict:enter             . "智慧動作鍵（自動猜測您想查詢的東西）")
+      (moedict                   . "開啟萌典查詢界面")
+      (moedict/current-as-init   . "開啟萌典查詢界面，並以目前條目為預設輸入")
+      (moedict/history-show-list . "開啟查詢歷史清單")
+      (moedict/history-next      . "跳到下一查詢歷史")
+      (moedict/history-previous  . "跳到上一查詢歷史")
+      (moedict/history-clean     . "清除查詢歷史")
+      (moedict:tab               . "往下跳到連結")
+      (moedict:shift+tab         . "往上跳到連結")
+      (moedict/open-website      . "開啟目前條目的網頁版界面")
+      )
+    "\n")))
+
+;; ======================================================
+;; History :: 查詢歷史
 ;; ======================================================
 
 (defun moedict/history-show-list ()
@@ -555,7 +629,7 @@ Return value is rendered string."
       (if previous
           (progn (moedict-lookup-and-show-in-buffer previous :no-push-history)
                  (moedict-set-current-vocabulary-to previous))
-        (message "沒有更舊的歷史了！")))))
+        (moedict-message "沒有更舊的歷史了！")))))
 
 (defun moedict/history-next ()
   (interactive)
@@ -565,14 +639,14 @@ Return value is rendered string."
       (if next
           (progn (moedict-lookup-and-show-in-buffer next :no-push-history)
                  (moedict-set-current-vocabulary-to next))
-        (message "已經是最新的項目！")))))
+        (moedict-message "已經是最新的項目！")))))
 
 (defun moedict/history-clean ()
   (interactive)
   (if (y-or-n-p "確定要清除歷史紀錄嗎？")
-      (progn (setq moedict--history nil)
-             (message "清除啦～"))
-    (message "不清除～")))
+      (progn (setq moedict--history '(,(or moedict--current-vocabulary "")))
+             (moedict-message "清除啦～"))
+    (moedict-message "不清除～")))
 
 (defun moedict-history-push (vocabulary)
   "Remove the existed same vocabulary in `moedict--history',"
