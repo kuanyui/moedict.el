@@ -87,125 +87,94 @@
   :group 'faces)
 
 (defface moedict-title
-  '((((class color) (background light))
-     (:foreground "#ff8700" :bold t :height 1.2))
-    (((class color) (background dark))
-     (:foreground "#ffa722" :bold t :height 1.2)))
+  '((((class color) (background light)) (:foreground "#ff8700" :bold t :height 1.2))
+    (((class color) (background dark)) (:foreground "#ffa722" :bold t :height 1.2)))
   "Face for title. ex:"
   :group 'moedict-faces)
 
 (defface moedict-stroke-count
-  '((((class color) (background light))
-     (:foreground "#787878"))
-    (((class color) (background dark))
-     (:foreground "#c1c1c1")))
+  '((((class color) (background light)) (:foreground "#787878"))
+    (((class color) (background dark)) (:foreground "#c1c1c1")))
   "Face for stroke-count."
   :group 'moedict-faces)
 
 (defface moedict-radical
-  '((((class color) (background light))
-     (:foreground "#ffffff" :background "#a40000"))
-    (((class color) (background dark))
-     (:foreground "#ffffff" :background "#a40000")))
+  '((((class color) (background light)) (:foreground "#ffffff" :background "#a40000"))
+    (((class color) (background dark)) (:foreground "#ffffff" :background "#a40000")))
   "Face for character's radical."
   :group 'moedict-faces)
 
 (defface moedict-non-radical-stroke-count
-  '((((class color) (background light))
-     (:inherit moedict-stroke-count))
-    (((class color) (background dark))
-     (:inherit moedict-stroke-count)))
+  '((((class color) (background light)) (:inherit moedict-stroke-count))
+    (((class color) (background dark)) (:inherit moedict-stroke-count)))
   "Face for non-radical stroke-count."
   :group 'moedict-faces)
 
 (defface moedict-bopomofo
-  '((((class color) (background light))
-     (:foreground "#008700" :background "#d7ff87"))
-    (((class color) (background dark))
-     (:foreground "#a1db00" :background "#5a5a5a")))
+  '((((class color) (background light)) (:foreground "#008700" :background "#d7ff87"))
+    (((class color) (background dark)) (:foreground "#a1db00" :background "#5a5a5a")))
   "Face for bopomofo （注音符號）."
   :group 'moedict-faces)
 
 (defface moedict-bopomofo2
-  '((((class color) (background light))
-     (:inherit moedict-bopomofo))
-    (((class color) (background dark))
-     (:inherit moedict-bopomofo)))
+  '((((class color) (background light)) (:inherit moedict-bopomofo))
+    (((class color) (background dark)) (:inherit moedict-bopomofo)))
   "Face for bopomofo2 （注音二式）."
   :group 'moedict-faces)
 
 (defface moedict-pinyin
-  '((((class color) (background light))
-     (:inherit moedict-bopomofo))
-    (((class color) (background dark))
-     (:inherit moedict-bopomofo)))
+  '((((class color) (background light)) (:inherit moedict-bopomofo))
+    (((class color) (background dark)) (:inherit moedict-bopomofo)))
   "Face for pinyin （拼音）."
   :group 'moedict-faces)
 
 (defface moedict-type
-  '((((class color) (background light))
-     (:foreground "#ffffd7" :background "#525252"))
-    (((class color) (background dark))
-     (:foreground "#525252" :background "#c1c1c1")))
+  '((((class color) (background light)) (:foreground "#ffffd7" :background "#525252"))
+    (((class color) (background dark)) (:foreground "#525252" :background "#c1c1c1")))
   "Face for type. ex: [動]、[名]"
   :group 'moedict-faces)
 
 (defface moedict-quote
-  '((((class color) (background light))
-     (:foreground "#ff4ea3" :slant italic))
-    (((class color) (background dark))
-     (:foreground "#ff6fa5" :slant italic)))
+  '((((class color) (background light)) (:foreground "#ff4ea3" :slant italic))
+    (((class color) (background dark)) (:foreground "#ff6fa5" :slant italic)))
   "Face for quote."
   :group 'moedict-faces)
 
 (defface moedict-def
-  '((((class color) (background light))
-     (:foreground "#1f5bff"))
-    (((class color) (background dark))
-     (:foreground "#6faaff")))
+  '((((class color) (background light)) (:foreground "#1f5bff"))
+    (((class color) (background dark)) (:foreground "#6faaff")))
   "Face for definitions."
   :group 'moedict-faces)
 
 (defface moedict-example
-  '((((class color) (background light))
-     (:foreground "#525252"))
-    (((class color) (background dark))
-     (:foreground "#cdcdcd")))
+  '((((class color) (background light)) (:foreground "#525252"))
+    (((class color) (background dark)) (:foreground "#cdcdcd")))
   "Face for example. ex: Example"
   :group 'moedict)
 
 (defface moedict-link
-  '((((class color) (background light))
-     (:foreground "#00a775"))
-    (((class color) (background dark))
-     (:foreground "#00d7af")))
+  '((((class color) (background light)) (:foreground "#00a775"))
+    (((class color) (background dark)) (:foreground "#00d7af")))
   "Face for link. ex:「見...等條」"
   :group 'moedict)
 
 (defface moedict-synonyms
-  '((((class color) (background light))
-     (:foreground "#9a08ff"))
-    (((class color) (background dark))
-     (:foreground "#aa71ff")))
+  '((((class color) (background light)) (:foreground "#9a08ff"))
+    (((class color) (background dark)) (:foreground "#aa71ff")))
   "Face for synonyms."
   :group 'moedict)
 
 (defface moedict-antonyms
-  '((((class color) (background light))
-     (:foreground "#9a08ff"))
-    (((class color) (background dark))
-     (:foreground "#aa71ff")))
+  '((((class color) (background light)) (:foreground "#9a08ff"))
+    (((class color) (background dark)) (:foreground "#aa71ff")))
   "Face for antonyms."
   :group 'moedict)
 
 (defface moedict-syn/antonyms-tag
-  '((((class color) (background light))
-     (:foreground "#ffffff" :background "#9a08ff"))
-    (((class color) (background dark))
-     (:foreground "#7008a0" :background "#eeaeff")))
+  '((((class color) (background light)) (:foreground "#ffffff" :background "#9a08ff"))
+    (((class color) (background dark)) (:foreground "#7008a0" :background "#eeaeff")))
   "Face for syn/antonyms-tag. ex: [同]"
   :group 'moedict)
-
 
 ;; ======================================================
 ;; Query
