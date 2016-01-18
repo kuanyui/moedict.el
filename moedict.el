@@ -231,7 +231,7 @@ Command 'xz' not found on your system. Please install it then try again")
 
 (defun moedict-open-sqlite-process ()
   (if (not (process-live-p moedict-sqlite-stream))
-      (setq moedict-sqlite-stream (esqlite-stream-open "dict.sqlite3"))))
+      (setq moedict-sqlite-stream (esqlite-stream-open moedict-dictionary-file-path))))
 
 (defmacro moedict-query (sql-query-string)
   `(progn
