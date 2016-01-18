@@ -204,6 +204,7 @@
                     (esqlite-format-text (concat string "%")))))))
 
 (defun moedict-close-sqlite-process ()
+  (interactive)
   (esqlite-stream-close moedict-sqlite-stream))
 
 (defun moedict-query-vocabulary (vocabulary)
