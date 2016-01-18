@@ -58,7 +58,6 @@
 (defvar moedict-history-buffer-name "*[萌典] 查詢歷史*")
 (defvar moedict-synonyms-tag (propertize "同" 'face 'moedict-syn/antonyms-tag))
 (defvar moedict-antonyms-tag (propertize "反" 'face 'moedict-syn/antonyms-tag))
-(defvar moedict-sqlite-stream nil "DO NOT CHANGE ME!")
 (defvar moedict-punctuations "[ \n。，！？；：．「」『』（）、【】《》〈〉—]")
 (defvar moedict--history nil "History list of current moedict buffer. DON'T SETQ ME.")
 (defvar moedict--current-vocabulary nil
@@ -229,20 +228,14 @@ Command 'xz' not found on your system. Please install it then try again")
 ;; Query
 ;; ======================================================
 
-(defun moedict-open-sqlite-process ()
-  (if (not (process-live-p moedict-sqlite-stream))
-      (setq moedict-sqlite-stream (esqlite-stream-open moedict-dictionary-file-path))))
-
 (defmacro moedict-query (sql-query-string)
   `(progn
-     (moedict-open-sqlite-process)
-     (esqlite-stream-read moedict-sqlite-stream ,sql-query-string)))
+     (esqlite-read moedict-dictionary-file-path ,sql-query-string)))
 
 (defmacro moedict-query-with-limit (sql-query-string)
   `(progn
-     (moedict-open-sqlite-process)
-     (esqlite-stream-read moedict-sqlite-stream
-                          (format "%s LIMIT %s" ,sql-query-string ,moedict-candidates-limit))))
+     (esqlite-read moedict-dictionary-file-path
+                   (format "%s LIMIT %s" ,sql-query-string ,moedict-candidates-limit))))
 
 (defun moedict-get-candidates-list (string)
   (cl-remove-if
@@ -251,10 +244,6 @@ Command 'xz' not found on your system. Please install it then try again")
            (moedict-query-with-limit
             (format "SELECT title FROM entries WHERE title LIKE %s"
                     (esqlite-format-text (concat string "%")))))))
-
-(defun moedict-close-sqlite-process ()
-  (interactive)
-  (esqlite-stream-close moedict-sqlite-stream))
 
 (defun moedict-query-vocabulary (vocabulary)
   "title, radical, stroke_count, non_radical_stroke_count,
