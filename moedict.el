@@ -41,9 +41,11 @@
 
 (defconst moedict-files-directory (file-name-directory load-file-name))
 
-(defvar moedict-dictionary-file-path
-  (concat moedict-files-directory "dict.sqlite3")
+(defvar moedict-dictionary-file-path (concat moedict-files-directory "dict.sqlite3")
   "萌典 sqlite3 字典檔的檔案路令")
+
+(defvar moedict-dictionary-xz-file-path (concat moedict-files-directory "dict.sqlite3.xz")
+  "萌典 sqlite3.xz 的路徑")
 
 (defvar moedict-dictionary-source-url
   "https://raw.githubusercontent.com/kuanyui/moedict.el/master/dict.sqlite3.xz"
@@ -207,12 +209,21 @@
   "If dictionary file is not existed, download & uncompress it with xz."
   (interactive)
   (if (not (file-exists-p moedict-dictionary-file-path))
-      (if (not (executable-find "xz"))
-          (moedict-message "您的系統上沒有發現xz這個指令，請安裝後再重試一次。
+      (moedict-message "字典檔似乎尚未下載或解壓縮，請執行 M-x moedict-install-dictionary （可能會花上一段時間）")))
+
+(defun moedict-install-dictionary ()
+  (interactive)
+  (if (not (executable-find "xz"))
+      (moedict-message "您的系統上沒有發現xz這個指令，請安裝後再重試一次。
 Command 'xz' not found on your system. Please install it then try again")
-        (progn
-          (url-copy-file moedict-dictionary-source-url moedict-dictionary-file-path)
-          (shell-command (format "xz -kdvv %s.xz" moedict-dictionary-file-path))))))
+    (if (file-exists-p moedict-dictionary-xz-file-path)
+        (progn (shell-command (format "xz -kdfvv %s.xz" moedict-dictionary-file-path))
+               (moedict-message "字典檔設定完成！您現在已經可以使用 M-x moedict"))
+      (moedict-download-dictionary-file-then-uncompress))))
+
+(defun moedict-download-dictionary-file-then-uncompress ()
+  (url-copy-file moedict-dictionary-source-url moedict-dictionary-file-path)
+  (moedict-install-dictionary))
 
 ;; ======================================================
 ;; Query
