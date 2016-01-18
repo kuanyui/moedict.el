@@ -438,15 +438,12 @@ Return value is rendered string."
   (interactive)
   (moedict-check-dictionary-file)
   (if (null
-       (helm :sources
-             (helm-build-sync-source "[萌典] 請輸入您欲查詢的單字："
-               :candidates (lambda () (moedict-get-candidates-list helm-pattern))
-               :volatile t
-               :candidate-number-limit moedict-candidates-limit
-               :action (lambda (x) (moedict-lookup-and-show-in-buffer x)
-                         (kill-buffer moedict-candidate-buffer-name))
-               :requires-pattern t
-               )
+       (helm :sources (helm-build-sync-source "[萌典] 請輸入您欲查詢的單字："
+			:candidates (lambda () (moedict-get-candidates-list helm-pattern))
+			:volatile t
+			:candidate-number-limit moedict-candidates-limit
+			:action #'moedict-lookup-and-show-in-buffer
+			:requires-pattern t)
              :input (or init-input "")
              :buffer moedict-candidate-buffer-name
              :prompt moedict-prompt))
