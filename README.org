@@ -6,7 +6,7 @@ Look up (Tranditional) Chinese vocabulary with MOE dict ([[https://moedict.tw][�
 
 
 * Screenshot 畫面快照
-<a href="https://raw.github.com/kuanyui/moedict.el/master/screenshot.png"><img src="screenshot.png" width="710" height="379"/></a>
+[[file:screenshot.png]]
 
 * Requirement 需求
 ** System 
