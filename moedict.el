@@ -350,8 +350,7 @@ SUBEXP-DEPTH is 0 by default."
        (add-text-properties 0 (length link) '(face moedict-link) link)
        (mapc (lambda (begin-end)
                (add-face-text-property (car begin-end) (cdr begin-end) '(underline t) t link))
-             (moedict-match-positions "「\\(.+?\\)」" link 1)
-             ))
+             (moedict-match-positions "「\\(.+?\\)」" link 1)))
 
      (moedict-mapconcat-with-newline
       (list
@@ -359,11 +358,8 @@ SUBEXP-DEPTH is 0 by default."
        (if example  (format "        %s" (propertize example 'face 'moedict-example)))
        (if quote    (format "        %s" (propertize quote 'face 'moedict-quote)))
        (if link     (format "        %s" link))
-       (if synonyms (format "            %s %s"
-                            moedict-synonyms-tag (propertize synonyms 'face 'moedict-synonyms)))
-       (if antonyms (format "            %s %s"
-                            moedict-antonyms-tag (propertize antonyms 'face 'moedict-antonyms)))))))
-
+       (if synonyms (format "            %s %s" moedict-synonyms-tag (propertize synonyms 'face 'moedict-synonyms)))
+       (if antonyms (format "            %s %s" moedict-antonyms-tag (propertize antonyms 'face 'moedict-antonyms)))))))
 
 (defun moedict--render-rows (rows)
   "ROWS is the query result retrieved from `moedict-query-vocabulary',
@@ -397,8 +393,7 @@ Return value is rendered string."
                 (concat (moedict--render-type)
                         (if type "\n\n" "") ; Because some vocabulary have no type
                         (moedict--render-def)))
-               (t
-                (moedict--render-def))))
+               (t (moedict--render-def))))
        (moedict--replace-null-with-nil rows))
       ))))
 
@@ -588,7 +583,7 @@ Return value is rendered string."
 (defun moedict-get-help-string ()
   (concat
    (propertize "* 萌え萌えキュン的萌典說明書\n" 'face 'bold)
-   "
+   "以下按鍵可以在萌典的 buffer 中使用：\n
 | 函數名稱 | 按鍵 | 描述 |
 |----------|------|------|
 "
@@ -601,8 +596,7 @@ Return value is rendered string."
                  (propertize (key-description a) 'face 'font-lock-constant-face))
                (where-is-internal (car x) moedict-mode-map) ", ")  ; (key-binding list)
               (cdr x)))                   ;description
-    '(
-      (moedict/help              . "開啟目前這個說明書")
+    '((moedict/help              . "開啟目前這個說明書")
       (moedict                   . "開啟萌典查詢界面")
       (moedict/exit              . "關掉所有萌典相關視窗跟buffer")
       (moedict:enter             . "智慧動作鍵（自動猜測您想查詢的東西）")
@@ -613,8 +607,7 @@ Return value is rendered string."
       (moedict/history-clean     . "清除查詢歷史")
       (moedict:tab               . "往下跳到連結")
       (moedict:shift+tab         . "往上跳到連結")
-      (moedict/open-website      . "開啟目前條目的網頁版界面")
-      )
+      (moedict/open-website      . "開啟目前條目的網頁版界面"))
     "\n")))
 
 ;; ======================================================
@@ -625,13 +618,11 @@ Return value is rendered string."
   (interactive)
   (if (= (length moedict--history) 0)
       (moedict-message "目前歷史紀錄是空的喔")
-    (if (null (helm :sources
-                    (helm-build-sync-source "請選擇單字："
-                      :candidates moedict--history
-                      :volatile t
-                      :action (lambda (x) (moedict-lookup-and-show-in-buffer x)
-                                (kill-buffer moedict-history-buffer-name))
-                      )
+    (if (null (helm :sources (helm-build-sync-source "請選擇單字："
+                               :candidates moedict--history
+                               :volatile t
+                               :action (lambda (x) (moedict-lookup-and-show-in-buffer x)
+                                         (kill-buffer moedict-history-buffer-name)))
                     :buffer moedict-history-buffer-name
                     :prompt moedict-prompt))
         (moedict-message "取消動作！"))))
