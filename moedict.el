@@ -266,6 +266,10 @@ WHERE entries.title = %s
     AND definitions.heteronym_id = heteronyms.id;
 " (esqlite-format-text vocabulary))))
 
+(defun moedict-if-a-vocabulary-exactly-exist (vocabulary)
+  (moedict-query
+   (format "SELECT 1 FROM entries WHERE title = %s;" (esqlite-format-text vocabulary))))
+
 ;; ======================================================
 ;; Low-level & Internal Tools
 ;; ======================================================
@@ -452,7 +456,7 @@ Return value is rendered string."
 (defun moedict/smart (&optional begin end)
   "功能同 `moedict-lookup-region' ，但會自動檢查目前的選取狀態，
 如果處於選取狀態就查詢選取範圍內的字串，否則就直接呼叫 `moedict'"
-  (interactive "r")
+  (interactive "P")
   (moedict-check-dictionary-file)
   (if (region-active-p)
       (moedict (buffer-substring-no-properties begin end))
@@ -514,14 +518,14 @@ Return value is rendered string."
 ;; ======================================================
 
 (defun moedict:enter (&optional begin end)
-  (interactive "r")
+  (interactive "P")
   (if (region-active-p)
       (moedict (buffer-substring-no-properties begin end))
     (let ((vocabulary (moedict-try-to-get-vocabulary-at-point)))
-      (if (moedict-point-at-underline-p)
+      (if (and (moedict-point-at-underline-p)
+               (moedict-if-a-vocabulary-exactly-exist vocabulary))
           (moedict-lookup-and-show-in-buffer vocabulary)
-        (moedict vocabulary)
-        ))))
+        (moedict vocabulary)))))
 
 (defun moedict:tab ()
   (interactive)
@@ -655,12 +659,16 @@ Return value is rendered string."
 (defun moedict/history-clean ()
   (interactive)
   (if (y-or-n-p "確定要清除歷史紀錄嗎？")
-      (progn (setq moedict--history '(,(or moedict--current-vocabulary "")))
+      (progn (setq moedict--history (list (or moedict--current-vocabulary "")))
              (moedict-message "清除啦～"))
     (moedict-message "不清除～")))
 
 (defun moedict-history-push (vocabulary)
-  "Remove the existed same vocabulary in `moedict--history',"
+  "1. Move `moedict--current-vocabulary' to the first item in `moedict--history',
+2. Remove the existed same vocabulary in `moedict--history',
+3. Push the VOCABULARY into `moedict--history' as the first item"
+  (setq moedict--history (delete moedict--current-vocabulary moedict--history))
+  (push moedict--current-vocabulary moedict--history)
   (setq moedict--current-vocabulary vocabulary)
   (setq moedict--history (delete vocabulary moedict--history))
   (push vocabulary moedict--history))
