@@ -66,9 +66,9 @@
   "查詢時所列出的候選字最大數量"
   :type 'integer :group 'moedict)
 
-(defvar moedict-try-to-get-vocabulary-max-length 4
-  "嘗試猜測字彙時，猜測字彙的最大長度"
-  :type 'integer :group 'moedict)
+(defcustom moedict-try-to-get-vocabulary-max-length 4
+    "嘗試猜測字彙時，猜測字彙的最大長度"
+    :type 'integer :group 'moedict)
 
 (defcustom moedict-mode-hook nil
   "Normal hook run when entering moedict-mode."
