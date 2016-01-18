@@ -1,9 +1,9 @@
-;;; moedict.el ---                                  -*- lexical-binding: t; -*-
+;;; moedict.el --- Moe Dict ("萌典", a Chinese dictionary) client for Emacs -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2014, 2016 ono hiroko
 
 ;; Author: ono hiroko (kuanyui) <azazabc123@gmail.com>
-;; Keywords: tools
+;; Keywords: tools, dictionary
 ;; Package-Requires: ((emacs "24.3") (helm "1.9.1") (esqlite "0.3.1"))
 ;; X-URL: https://github.com/kuanyui/moedict.el
 ;; Version: {{VERSION}}
@@ -683,6 +683,7 @@ Return value is string or nil"
   (setq moedict--current-vocabulary value))
 
 (provide 'moedict)
+
 ;; The ultimate answer of life, Universe, and everything is 42,
 ;; the ultimate answer of Taiwan is 689.
 ;;; moedict+.el ends here
