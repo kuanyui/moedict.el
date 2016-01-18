@@ -1,0 +1,57 @@
+* moedict.el
+
+Look up (Tranditional) Chinese vocabulary with MOE dict ([[https://moedict.tw][萌典]]) in Emacs.
+
+在 Emacs 內查詢[[https://moedict.tw][萌典]]。
+
+
+* Screenshot 畫面快照
+<a href="https://raw.github.com/kuanyui/moedict.el/master/screenshot.png"><img src="screenshot.png" width="710" height="379"/></a>
+
+* Requirement 需求
+** System 
+- Emacs >= 24.3
+- SQLite
+
+** Emacs packages
+
+#+BEGIN_QUOTE
+The following packages are available on [[https://github.com/milkypostman/melpa][MELPA]]\\
+以下 packages 可於 MELPA 上安裝。
+#+END_QUOTE
+
+- helm
+- esqlite
+
+* Installation 安裝
+
+Add following to your =~/.emacs.d/init.el= or =~/.emacs=:
+
+增加下列設定到你的 Emacs 設定檔中。
+
+#+BEGIN_SRC elisp
+(add-to-list 'load-path "~/path/to/moedict/")
+(require 'moedict)
+#+END_SRC
+
+* Usage 使用方法
+
+- =M-x moedict= Open the interface to lookup MoeDict.
+- =M-x moedict/last-vocabulary= The same as =moedict=, but use the last query as the initial input.
+- =M-x moedict/region= The same as =moedict=, but use the selected region as the initial input.
+- =M-x moedict/smart= The same as =moedict/region=, but when no region is selected, call =moedict= instead.
+
+A superb readable "*How to use*" is available via =M-x moedict/help=.
+
+- =M-x moedict= 開啟萌典查詢界面。
+- =M-x moedict/last-vocabulary= 功能同 =moedict= ，但以上一次的查詢作為預設輸入。
+- =M-x moedict/region= 功能同 =moedict= ，但以目前選取範圍作為預設輸入。
+- =M-x moedict/smart= 功能同 =moedict/region= ，但當目前沒有文字選取時，就直接呼叫 =moedict=。
+
+其餘如何使用請直接 =M-x moedict/help= 可以看超級好讀的說明書。
+
+* License 授權
+
+The copyright the dictionary file (=dict.sqlite3=) is owned by Ministry of Education of Taiwan.
+
+辭典本文的著作權屬台灣教育部所有，Emacs Lisp 程式碼部份則是以 WTFPL 2.0 釋出。

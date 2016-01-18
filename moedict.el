@@ -557,9 +557,11 @@ Return value is rendered string."
                  (propertize (key-description a) 'face 'font-lock-constant-face))
                (where-is-internal (car x) moedict-mode-map) ", ")  ; (key-binding list)
               (cdr x)))                   ;description
-    '((moedict/exit              . "關掉所有萌典相關視窗跟buffer")
-      (moedict:enter             . "智慧動作鍵（自動猜測您想查詢的東西）")
+    '(
+      (moedict/help              . "開啟目前這個說明書")
       (moedict                   . "開啟萌典查詢界面")
+      (moedict/exit              . "關掉所有萌典相關視窗跟buffer")
+      (moedict:enter             . "智慧動作鍵（自動猜測您想查詢的東西）")
       (moedict/last-vocabulary   . "開啟萌典查詢界面，並以目前條目為預設輸入")
       (moedict/history-show-list . "開啟查詢歷史清單")
       (moedict/history-next      . "跳到下一查詢歷史")
