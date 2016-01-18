@@ -31,6 +31,7 @@
 
 (setq moedict-prompt "萌典：")
 (setq moedict-buffer-name "*[萌典] 查詢結果*")
+(setq moedict-help-buffer-name "*[萌典] 幫助視窗*")
 (setq moedict-candidate-buffer-name "*[萌典] 候選字*")
 (setq moedict-candidates-limit 200)
 (setq moedict-history-buffer-name "*[萌典] 查詢歷史*")
@@ -38,7 +39,7 @@
 (setq moedict-antonyms-tag (propertize "反" 'face 'moedict-syn/antonyms-tag))
 (defvar moedict-sqlite-stream nil)
 (setq moedict-try-to-get-vocabulary-max-length 4)
-(setq moedict-punctuations "[\n 。，！？；：．「」『』（）、【】《》〈〉—]")
+(setq moedict-punctuations "[ \n。，！？；：．「」『』（）、【】《》〈〉—]")
 (defvar moedict--history nil "History list of current moedict buffer.")
 (defvar moedict--current-vocabulary nil "History list of current moedict buffer.")
 
@@ -280,10 +281,10 @@ Don't borthered by the serial numbers."
    row
    ))
 
-(defun moedict-concat-with-newline (&rest args)
+(defun moedict-mapconcat-with-newline (list)
   "Ignore nil, seperator is \\n."
   (mapconcat #'identity
-             (remove-if #'null args)
+             (remove-if #'null list)
              "\n"))
 
 (defun moedict-mapconcat-with-2-newlines (list)
@@ -338,15 +339,16 @@ SUBEXP-DEPTH is 0 by default."
              (moedict-match-positions "「\\(.+?\\)」" link 1)
              ))
 
-     (moedict-concat-with-newline
-      (if def      (format "    %s" (propertize def 'face 'moedict-def)))
-      (if example  (format "        %s" (propertize example 'face 'moedict-example)))
-      (if quote    (format "        %s" (propertize quote 'face 'moedict-quote)))
-      (if link     (format "        %s" link))
-      (if synonyms (format "            %s %s"
-                           moedict-synonyms-tag (propertize synonyms 'face 'moedict-synonyms)))
-      (if antonyms (format "            %s %s"
-                           moedict-antonyms-tag (propertize antonyms 'face 'moedict-antonyms))))))
+     (moedict-mapconcat-with-newline
+      (list
+       (if def      (format "    %s" (propertize def 'face 'moedict-def)))
+       (if example  (format "        %s" (propertize example 'face 'moedict-example)))
+       (if quote    (format "        %s" (propertize quote 'face 'moedict-quote)))
+       (if link     (format "        %s" link))
+       (if synonyms (format "            %s %s"
+                            moedict-synonyms-tag (propertize synonyms 'face 'moedict-synonyms)))
+       (if antonyms (format "            %s %s"
+                            moedict-antonyms-tag (propertize antonyms 'face 'moedict-antonyms)))))))
 
 
 (defun moedict--render-rows (rows)
@@ -446,7 +448,7 @@ Return value is rendered string."
       (moedict (buffer-substring-no-properties begin end))
     (moedict)))
 
-(defun moedict/current-as-init ()
+(defun moedict/last-vocabulary ()
   "開啟萌典查詢界面，並以目前條目為預設輸入"
   (interactive)
   (moedict moedict--current-vocabulary))
@@ -542,10 +544,12 @@ Return value is rendered string."
   "Kill all moedict buffers."
   (interactive)
   (mapc (lambda (x)
-          (bury-buffer x)
-          (kill-buffer x))
+          (when (get-buffer x)
+            (bury-buffer x)
+            (kill-buffer x)))
         (list moedict-buffer-name
               moedict-history-buffer-name
+              moedict-help-buffer-name
               moedict-candidate-buffer-name)))
 
 (defun moedict/open-website ()
@@ -556,24 +560,21 @@ Return value is rendered string."
 
 (defun moedict/help ()
   (interactive)
-  (with-selected-window (get-buffer-window (help-buffer))
+  (with-temp-buffer-window moedict-help-buffer-name nil nil)
+  (with-selected-window (get-buffer-window moedict-help-buffer-name)
+    (help-mode)
     (let (buffer-read-only)
-      (goto-char (point-max))
-      (previous-line)
-      (beginning-of-line)
-      (delete-region (point-min) (point))
-      (insert
-       (with-temp-buffer
-         (insert (moedict-get-help-string))
-         (org-table-align)
-         (buffer-string)
-         )
-       "\n"
-       ))))
+      (delete-region (point-min) (point-max))
+      (insert (with-temp-buffer
+                (insert (moedict-get-help-string))
+                (org-table-align)
+                (buffer-string))
+              "\n")))
+  (switch-to-buffer-other-window moedict-help-buffer-name))
 
 (defun moedict-get-help-string ()
   (concat
-   (propertize "* 萌え萌え萌典說明書\n" 'face 'bold)
+   (propertize "* 萌え萌えキュン的萌典說明書\n" 'face 'bold)
    "
 | 函數名稱 | 按鍵 | 描述 |
 |----------|------|------|
@@ -585,12 +586,12 @@ Return value is rendered string."
               (mapconcat            ;key-binding
                (lambda (a)
                  (propertize (key-description a) 'face 'font-lock-constant-face))
-               (where-is-internal (car x)) ", ")  ; (key-binding list)
+               (where-is-internal (car x) moedict-mode-map) ", ")  ; (key-binding list)
               (cdr x)))                   ;description
     '((moedict/exit              . "關掉所有萌典相關視窗跟buffer")
       (moedict:enter             . "智慧動作鍵（自動猜測您想查詢的東西）")
       (moedict                   . "開啟萌典查詢界面")
-      (moedict/current-as-init   . "開啟萌典查詢界面，並以目前條目為預設輸入")
+      (moedict/last-vocabulary   . "開啟萌典查詢界面，並以目前條目為預設輸入")
       (moedict/history-show-list . "開啟查詢歷史清單")
       (moedict/history-next      . "跳到下一查詢歷史")
       (moedict/history-previous  . "跳到上一查詢歷史")
