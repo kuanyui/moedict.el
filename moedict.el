@@ -23,16 +23,19 @@
 
 ;;; Commentary:
 
+;; M-x `moedict' to use. M-x `moedict/help' to see how to use.
+
 ;; Because the answer of Universe is 42, and the line number of this
-;; file MUST be 689, I cannot write a complete README in here.
+;; file *MUST* be 689, I cannot write a complete README in here.
 ;;
-;; If need help, please visit https://github.com/kuanyui/moedict.el
+;; To read more info, please visit https://github.com/kuanyui/moedict.el
 
 ;;; Code:
 
 ;; ======================================================
 ;; Variables
 ;; ======================================================
+
 (require 'esqlite)
 (require 'helm)
 (require 'org-table)
@@ -681,6 +684,6 @@ Return value is string or nil"
 
 (provide 'moedict)
 
-;; The ultimate answer of life, Universe, and everything is 42,
-;; the ultimate answer of Taiwan is 689.
-;;; moedict+.el ends here
+;; The ultimate answer of life, Universe, and everything is `42',
+;; the ultimate answer of Taiwan is `689'.
+;;; moedict.el ends here
