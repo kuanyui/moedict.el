@@ -1,6 +1,6 @@
 * moedict.el
 
-Look up (Tranditional) Chinese vocabulary with MOE dict ([[https://moedict.tw][萌典]]) in Emacs.
+Look up (Tranditional) Chinese vocabulary with [[https://moedict.tw][MOE dict (Ministry Of Education of Taiwan)]] in Emacs.
 
 在 Emacs 內查詢[[https://moedict.tw][萌典]]。
 
