@@ -245,9 +245,9 @@ Command 'xz' not found on your system. Please install it then try again")
 (defun moedict-get-candidates-list (string)
   (cl-remove-if
    (lambda (x) (string-prefix-p "{" x))
-   (mapcon #'car (moedict-query-with-limit
-                  (format "SELECT title FROM entries WHERE title LIKE %s"
-                          (esqlite-format-text (concat string "%")))))))
+   (cl-mapcon #'car (moedict-query-with-limit
+                     (format "SELECT title FROM entries WHERE title LIKE %s"
+                             (esqlite-format-text (concat string "%")))))))
 
 (defun moedict-query-vocabulary (vocabulary)
   "title, radical, stroke_count, non_radical_stroke_count,
@@ -299,13 +299,13 @@ Don't borthered by the serial numbers."
 (defun moedict-mapconcat-with-newline (list)
   "Ignore nil, seperator is \\n."
   (mapconcat #'identity
-             (remove-if #'null list)
+             (cl-remove-if #'null list)
              "\n"))
 
 (defun moedict-mapconcat-with-2-newlines (list)
   "Ignore nil, seperator is \\n\\n."
   (mapconcat #'identity
-             (remove-if #'null list)
+             (cl-remove-if #'null list)
              "\n\n"))
 
 (defun moedict--replace-null-with-nil (list)
