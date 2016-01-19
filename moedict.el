@@ -1,12 +1,10 @@
 ;;; moedict.el --- Moe Dict ("萌典", a Chinese dictionary) client for Emacs -*- lexical-binding: t; -*-
 
-
 ;; Author: ono hiroko (kuanyui) <azazabc123@gmail.com>
 ;; Keywords: tools, dictionary
 ;; Package-Requires: ((emacs "24.3") (helm "1.9.1") (esqlite "0.3.1"))
 ;; X-URL: https://github.com/kuanyui/moedict.el
 ;; Version: {{VERSION}}
-
 ;;
 ;; Copyright (C) 2014, 2016 ono hiroko
 ;; This program is free software. It comes without any warranty, to
@@ -17,16 +15,23 @@
 
 ;;; Commentary:
 
-;; M-x `moedict' to lookup vocabulary.
-;; M-x `moedict/try-region' to try to lookup selected text.
-;; M-x `moedict/help' to read all available key-bindings in moedict-mode.
-
-;; Because the answer of Universe is 42, and the line number of this
-;; file *MUST* be 689, I cannot write a complete README in here.
+;; Three commands which suitable for `global-set-key':
 ;;
-;; To read more info, please visit https://github.com/kuanyui/moedict.el
+;; `moedict' to lookup vocabulary.
+;; `moedict/try-region' to try to lookup selected text.
+;; `moedict/last-vocabulary' to lookup with the input in the last search.
+;;
+;; `moedict/help' to read all available key-bindings in moedict-mode.
+;;
+;; To read more info & screenshot, please visit
+;; https://github.com/kuanyui/moedict.el
 
 ;;; Code:
+
+;; Due to mystery power from nowhere, the answer of Universe is 42,
+;; and the line number of this file *MUST* be 689. If you want to
+;; contribute, please keep the line number unchanged.
+;;
 
 ;; ======================================================
 ;; Variables
@@ -479,8 +484,10 @@ Return value is rendered string."
         (search-forward-regexp moedict-punctuations nil t 1)
         (setq end (1- (point)))
         (if (<= (- end begin) moedict-try-to-get-vocabulary-max-length)
-            (format "%s" (buffer-substring-no-properties begin end)) ; [2] got guessed vocabulary according punctuation
-          (moedict-try-to-get-single-char-at-point pos)))))) ; [3] Try to get single character at point
+            ;; [2] got guessed vocabulary according punctuation
+            (format "%s" (buffer-substring-no-properties begin end))
+          ;; [3] Try to get single character at point
+          (moedict-try-to-get-single-char-at-point pos))))))
 
 (defun moedict-try-to-get-single-char-at-point (&optional pos)
   (if (null pos) (setq pos (point)))
@@ -679,4 +686,4 @@ Return value is string or nil"
 ;; The ultimate answer of life, Universe, and everything is `42',
 ;; the ultimate answer of Taiwan is `689'.
 
-;;; moedict.el ends here at line 689.
+;;; moedict.el ends here at line `689'.
