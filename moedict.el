@@ -1,6 +1,5 @@
 ;;; moedict.el --- Moe Dict ("萌典", a Chinese dictionary) client for Emacs -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2014, 2016 ono hiroko
 
 ;; Author: ono hiroko (kuanyui) <azazabc123@gmail.com>
 ;; Keywords: tools, dictionary
@@ -8,22 +7,17 @@
 ;; X-URL: https://github.com/kuanyui/moedict.el
 ;; Version: {{VERSION}}
 
-;; This program is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation, either version 3 of the License, or
-;; (at your option) any later version.
-
-;; This program is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
-
-;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;;
+;; Copyright (C) 2014, 2016 ono hiroko
+;; This program is free software. It comes without any warranty, to
+;; the extent permitted by applicable law. You can redistribute it
+;; and/or modify it under the terms of the Do What The Fuck You Want
+;; To Public License, Version 2, as published by Sam Hocevar. See
+;; http://www.wtfpl.net/ for more details.
 
 ;;; Commentary:
 
-;; M-x `moedict' to use. M-x `moedict/help' to see how to use.
+;; M-x `moedict' to use. M-x `moedict/help' to see a complete how to use.
 
 ;; Because the answer of Universe is 42, and the line number of this
 ;; file *MUST* be 689, I cannot write a complete README in here.
@@ -447,13 +441,13 @@ Return value is rendered string."
       (moedict-message "請先反白選取您欲查詢的單字後，再執行此命令！")
     (moedict (buffer-substring-no-properties begin end))))
 
-(defun moedict/smart (&optional begin end)
+(defun moedict/smart ()
   "功能同 `moedict-lookup-region' ，但會自動檢查目前的選取狀態，
 如果處於選取狀態就查詢選取範圍內的字串，否則就直接呼叫 `moedict'"
-  (interactive "P")
+  (interactive)
   (moedict-check-dictionary-file)
   (if (region-active-p)
-      (moedict (buffer-substring-no-properties begin end))
+      (moedict (buffer-substring-no-properties (region-beginning) (region-end)))
     (moedict)))
 
 (defun moedict/last-vocabulary ()
@@ -511,10 +505,10 @@ Return value is rendered string."
 ;; Commands for Keys
 ;; ======================================================
 
-(defun moedict:enter (&optional begin end)
-  (interactive "P")
+(defun moedict:enter ()
+  (interactive)
   (if (region-active-p)
-      (moedict (buffer-substring-no-properties begin end))
+      (moedict (buffer-substring-no-properties (region-beginning) (region-end)))
     (let ((vocabulary (moedict-try-to-get-vocabulary-at-point)))
       (if (and (moedict-point-at-underline-p)
                (moedict-if-a-vocabulary-exactly-exist vocabulary))
@@ -684,4 +678,5 @@ Return value is string or nil"
 
 ;; The ultimate answer of life, Universe, and everything is `42',
 ;; the ultimate answer of Taiwan is `689'.
-;;; moedict.el ends here
+
+;;; moedict.el ends here at line 689.
