@@ -17,7 +17,9 @@
 
 ;;; Commentary:
 
-;; M-x `moedict' to use. M-x `moedict/help' to see a complete how to use.
+;; M-x `moedict' to lookup vocabulary.
+;; M-x `moedict/try-region' to try to lookup selected text.
+;; M-x `moedict/help' to read all available key-bindings in moedict-mode.
 
 ;; Because the answer of Universe is 42, and the line number of this
 ;; file *MUST* be 689, I cannot write a complete README in here.
@@ -58,7 +60,7 @@
 (defvar moedict-punctuations "[ \n。，！？；：．「」『』（）、【】《》〈〉—]")
 (defvar moedict--history nil "History list of current moedict buffer. DON'T SETQ ME.")
 (defvar moedict--current-vocabulary nil
-  "History list of current moedict buffer. DON'T SETQ ME YOU IDIOT")
+  "History list of current moedict buffer. DON'T SETQ ME.")
 
 (defcustom moedict-candidates-limit 200
   "查詢時所列出的候選字最大數量"
@@ -79,6 +81,7 @@
     (define-key map (kbd "l")         'moedict)
     (define-key map (kbd "h")         'moedict/help)
     (define-key map (kbd "?")         'moedict/help)
+    (define-key map (kbd "r")         'moedict/try-region)
     (define-key map (kbd "<enter>")   'moedict:enter)
     (define-key map (kbd "RET")       'moedict:enter)
     (define-key map (kbd "<tab>")     'moedict:tab)
@@ -203,9 +206,9 @@
 
 (defun moedict-check-dictionary-file ()
   "If dictionary file is not existed, download & uncompress it with xz."
-  (interactive)
   (if (not (file-exists-p moedict-dictionary-file-path))
-      (moedict-message "字典檔似乎尚未下載或解壓縮，請執行 M-x moedict-install-dictionary （可能會花上一段時間）")))
+      (moedict-message "字典檔似乎尚未下載或解壓縮，請執行 M-x moedict-install-dictionary （可能會花上一段時間）
+The dictionary file seems haven't been downloaded or extracted. Please M-x moedict-install-dictionary (It would take some time)")))
 
 (defun moedict-install-dictionary ()
   (interactive)
@@ -418,7 +421,7 @@ Return value is rendered string."
     (moedict-message "完成～")))
 
 (defun moedict (&optional init-input)
-  "查萌典。"
+  "開啟萌典查詢界面。"
   (interactive)
   (moedict-check-dictionary-file)
   (if (null
@@ -433,17 +436,8 @@ Return value is rendered string."
              :prompt moedict-prompt))
       (moedict-message "找不到結果，取消～")))
 
-(defun moedict/region (begin end)
-  "用萌典查詢選取範圍內的文字。"
-  (interactive "r")
-  (moedict-check-dictionary-file)
-  (if (not (region-active-p))
-      (moedict-message "請先反白選取您欲查詢的單字後，再執行此命令！")
-    (moedict (buffer-substring-no-properties begin end))))
-
-(defun moedict/smart ()
-  "功能同 `moedict-lookup-region' ，但會自動檢查目前的選取狀態，
-如果處於選取狀態就查詢選取範圍內的字串，否則就直接呼叫 `moedict'"
+(defun moedict/try-region ()
+  "功能同 `moedict' ，但如果目前有文字被選取，就查詢該該文字。"
   (interactive)
   (moedict-check-dictionary-file)
   (if (region-active-p)
@@ -577,7 +571,12 @@ Return value is rendered string."
 (defun moedict-get-help-string ()
   (concat
    (propertize "* 萌え萌えキュン的萌典說明書\n" 'face 'bold)
-   "以下按鍵可以在萌典的 buffer 中使用：\n
+   "以下三個命令適合設定到全域快速鍵：\n
+M-x moedict                 開啟查詢界面
+M-x moedict/try-region      嘗試查詢被選取的文字
+M-x moedict/last-vocabulary 開啟查詢界面，並以最後一次查詢為預設輸入
+
+以下按鍵可以在萌典的 buffer 中使用：\n
 | 函數名稱 | 按鍵 | 描述 |
 |----------|------|------|\n"
    (mapconcat
@@ -591,13 +590,14 @@ Return value is rendered string."
               (cdr x)))                   ;description
     '((moedict/help              . "開啟目前這個說明書")
       (moedict                   . "開啟萌典查詢界面")
-      (moedict/exit              . "關掉所有萌典相關視窗跟buffer")
-      (moedict:enter             . "智慧動作鍵（自動猜測您想查詢的東西）")
+      (moedict/try-region        . "嘗試搜尋選取的範圍")
       (moedict/last-vocabulary   . "開啟萌典查詢界面，並以目前條目為預設輸入")
+      (moedict/exit              . "關掉所有萌典相關視窗跟buffer")
       (moedict/history-show-list . "開啟查詢歷史清單")
       (moedict/history-next      . "跳到下一查詢歷史")
       (moedict/history-previous  . "跳到上一查詢歷史")
       (moedict/history-clean     . "清除查詢歷史")
+      (moedict:enter             . "不太智慧的智慧查詢（自動猜測您想查詢的東西）")
       (moedict:tab               . "往下跳到連結")
       (moedict:shift+tab         . "往上跳到連結")
       (moedict/open-website      . "開啟目前條目的網頁版界面"))
