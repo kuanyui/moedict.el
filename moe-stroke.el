@@ -104,6 +104,8 @@
 
 (defun moe-stroke-draw-line (canvas p1 p2)
   (let* ((canvas-size (moe-stroke-get-canvas-size))
+         (canvas-height (cdr canvas-size))
+         (height-zoom-rate (/ canvas-height 2050.0))
          (m (moe-stroke-get-slope-rate p1 p2))
          (p1-xy (moe-stroke-calculate-xy-on-canvas p1 canvas-size))
          (p2-xy (moe-stroke-calculate-xy-on-canvas p2 canvas-size))
@@ -111,7 +113,8 @@
          (p2x (car p2-xy))
          (p1y (cdr p1-xy))
          (p2y (cdr p2-xy))
-         (b   (moe-stroke-get-b p1y m p1x))
+         (raw-b (moe-stroke-get-b p1y m p1x))
+         (b (floor (* raw-b height-zoom-rate)))
          (delta-x (- p2x p1x)))
     (if (>= delta-x 0)
         (loop for x from p1x to p2x do
@@ -144,8 +147,9 @@ P1              P2
           (t (/ (- y1 y2) (- x2 x1))))))
 
 (defun moe-stroke-get-b (y m x)
-  "y - mx = b"
-  (- y (* m x)))
+  "y - mx = b
+X, Y is must on canvas"
+  (- (* m x) y))
 
 (defun moe-stroke-get-y (m x b)
   "y = mx + b"
