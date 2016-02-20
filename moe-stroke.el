@@ -70,16 +70,21 @@
 ;; ======================================================
 ;; Canvas
 ;; ======================================================
+(defun moe-stroke-create-buffer-if-not-exist ()
+  (if (not (get-buffer moe-stroke-buffer-name))
+      (with-temp-buffer-window moe-stroke-buffer-name t nil)))
 
 (defun moe-stroke-get-canvas-size ()
-  (let* ((size (min (/ (window-width) 2)
-                    (window-height)))
-         (x (* size 2))
-         (y size))
-    (cons x y)))
+  (moe-stroke-create-buffer-if-not-exist)
+  (with-current-buffer moe-stroke-buffer-name
+    (let* ((size (min (/ (window-width) 2)
+                      (window-height)))
+           (x (* size 2))
+           (y size))
+      (cons x y))))
 
 (defun moe-stroke-get-empty-canvas ()
-  "0 is empty, <ex> 4 x 4 canvas"
+  "0 means empty pixel"
   (let ((xy (moe-stroke-get-canvas-size)))
     (make-list (cdr xy)
                (make-list (car xy) 0))))
@@ -87,15 +92,16 @@
 (moe-stroke-get-stroke "萌")
 
 '(((703 . 216) (792 . 688)) ((436 . 527) (956 . 416)) ((1082 . 459) (1615 . 372)) ((1359 . 149) (1195 . 672)) ((433 . 853) (430 . 1529)) ((481 . 836) (756 . 761) (870 . 828) (834 . 1079) (809 . 1546)) ((493 . 1186) (764 . 1162)) ((483 . 1476) (744 . 1456)) ((1110 . 740) (1099 . 1276) (1000 . 1648) (743 . 1888)) ((1170 . 738) (1489 . 646) (1612 . 692) (1589 . 1080) (1588 . 1574) (1616 . 1942) (1319 . 1696)) ((1158 . 1099) (1516 . 1033)) ((1136 . 1373) (1525 . 1318)))
-()
+
+
 (defun moe-stroke-draw-canvas (canvas)
   "Overwrite *moe-stroke* buffer with CANVAS"
-  (if (buffer-live-p )
-  (with-current-buffer "*moe-stroke*"
-    (delete-region (point-min) (point-max))
-    (insert (moe-stroke-format-canvas canvas))))
+  (with-current-buffer moe-stroke-buffer-name
+    (let ((inhibit-read-only t))
+      (delete-region (point-min) (point-max))
+      (insert (moe-stroke-format-canvas canvas)))))
 
-(moe-stroke-draw-canvas '((0 0 0) (0 | 0)))
+
 (defun moe-stroke-draw-line (canvas p1 p2)
   (let* ((canvas-size (moe-stroke-get-canvas-size))
          (m (moe-stroke-get-slope-rate p1 p2))
@@ -111,13 +117,12 @@
         (loop for x from p1x to p2x do
               (let* ((y (moe-stroke-get-y m x b))
                      (char (moe-stroke-get-pixel-char canvas x y m))
-                     (new-canvas (moe-stroke-replace-pixel canvas x char)))
+                     (new-canvas (moe-stroke-replace-pixel canvas x y char)))
                 (moe-stroke-draw-canvas new-canvas)
                 ))
       (dotimes (x delta-x)
         )
       ))
-
   )
 
 (moe-stroke-draw-line (moe-stroke-get-empty-canvas)
