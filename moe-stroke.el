@@ -84,9 +84,8 @@
     (make-list (cdr xy)
                (make-list (car xy) 0))))
 
-  (moe-stroke-get-stroke "萌")
+(moe-stroke-get-stroke "萌")
 
-;;  -- / \ | +
 
 (defun moe-stroke-get-slope-rate (p1 p2)
   "Get slope rate of two points. <ex>
@@ -104,10 +103,42 @@ P1              P2
   "y = mx + b"
   (+ (* m x) b))
 
-(moe-stroke-get-slope-rate '(703 . 216) '(792 . 688))
-(defun moe-stroke-get-pixel-size ()
-  (/ 2050.0 )
+;;  - / \ | +
+
+(defun moe-stroke-replace-pixel (canvas x y elem)
+  "Return a new canvas. X, Y is counted from 1
+'((x1 x2 x3 x4 x5)  ; y1
+  (x1 x2 x3 x4 x5)  ; y2
+  (x1 x2 x3 x4 x5)  ; y3
+   "
+  (let* ((-x (1- x))
+         (-y (1- y))
+         (old-line (nth -y canvas))
+         (new-line (moe-stroke-set-nth -x elem old-line)))
+    (moe-stroke-set-nth -y new-line canvas)))
+
+(moe-stroke-replace-pixel '((0 0 0) (0 0 0) (0 0 0)) 2 3 'hi)
+
+(defun moe-stroke-set-2d-list (x y elem list)
+  (let )
+  (moe-stroke-set-nth y
+                      (nth x list)
+                      )
   )
+
+(defun moe-stroke-set-nth (n elem list)
+  (setcar (nthcdr n list) elem)
+  list)
+
+
+(let* ((canvas (moe-stroke-get-empty-canvas))
+       (canvas-size (moe-stroke-get-canvas-size))
+       (canvas-width (car canvas-size))
+       (canvas-height (cdr canvas-size))
+       (raw-p '(703 . 216))
+       (raw-x (car raw-p))
+       (raw-y (cdr raw-p))
+       ( )))
 
 (defun moe-stroke-get-point-percentage (xy)
   "Input is a raw point <ex> (703 . 216)
