@@ -27,7 +27,7 @@
 (defconst moe-stroke-directory (file-name-directory (buffer-file-name)))
 (setq moe-stroke-xml-directory (concat moe-stroke-directory "zh-stroke-data/utf8/"))
 (setq moe-stroke-json-directory (concat moe-stroke-directory "zh-stroke-data/json/"))
-
+(setq moe-stroke-buffer-name "*moe-stroke*")
 
 (string-to-char "萌")
 
@@ -86,6 +86,44 @@
 
 (moe-stroke-get-stroke "萌")
 
+'(((703 . 216) (792 . 688)) ((436 . 527) (956 . 416)) ((1082 . 459) (1615 . 372)) ((1359 . 149) (1195 . 672)) ((433 . 853) (430 . 1529)) ((481 . 836) (756 . 761) (870 . 828) (834 . 1079) (809 . 1546)) ((493 . 1186) (764 . 1162)) ((483 . 1476) (744 . 1456)) ((1110 . 740) (1099 . 1276) (1000 . 1648) (743 . 1888)) ((1170 . 738) (1489 . 646) (1612 . 692) (1589 . 1080) (1588 . 1574) (1616 . 1942) (1319 . 1696)) ((1158 . 1099) (1516 . 1033)) ((1136 . 1373) (1525 . 1318)))
+()
+(defun moe-stroke-draw-canvas (canvas)
+  "Overwrite *moe-stroke* buffer with CANVAS"
+  (if (buffer-live-p )
+  (with-current-buffer "*moe-stroke*"
+    (delete-region (point-min) (point-max))
+    (insert (moe-stroke-format-canvas canvas))))
+
+(moe-stroke-draw-canvas '((0 0 0) (0 | 0)))
+(defun moe-stroke-draw-line (canvas p1 p2)
+  (let* ((canvas-size (moe-stroke-get-canvas-size))
+         (m (moe-stroke-get-slope-rate p1 p2))
+         (p1-xy (moe-stroke-calculate-xy-on-canvas p1 canvas-size))
+         (p2-xy (moe-stroke-calculate-xy-on-canvas p2 canvas-size))
+         (p1x (car p1-xy))
+         (p2x (car p2-xy))
+         (p1y (cdr p1-xy))
+         (p2y (cdr p2-xy))
+         (b   (moe-stroke-get-b p1y m p1x))
+         (delta-x (- p2x p1x)))
+    (if (>= delta-x 0)
+        (loop for x from p1x to p2x do
+              (let* ((y (moe-stroke-get-y m x b))
+                     (char (moe-stroke-get-pixel-char canvas x y m))
+                     (new-canvas (moe-stroke-replace-pixel canvas x char)))
+                (moe-stroke-draw-canvas new-canvas)
+                ))
+      (dotimes (x delta-x)
+        )
+      ))
+
+  )
+
+(moe-stroke-draw-line (moe-stroke-get-empty-canvas)
+                      '(703 . 216)
+                      '(792 . 688))
+
 
 (defun moe-stroke-get-slope-rate (p1 p2)
   "Get slope rate of two points. <ex>
@@ -99,9 +137,13 @@ P1              P2
           ((eq x1 x2) 50)        ;'vertical
           (t (/ (- y2 y1) (- x2 x1))))))
 
+(defun moe-stroke-get-b (y m x)
+  "y - mx = b"
+  (- y (* m x)))
+
 (defun moe-stroke-get-y (m x b)
   "y = mx + b"
-  (+ (* m x) b))
+  (floor (+ (* m x) b)))
 
 
 (defun moe-stroke-get-pixel-char (canvas x y m)
