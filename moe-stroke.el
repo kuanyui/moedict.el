@@ -95,22 +95,32 @@ P1              P2
         (y1 (float (cdr p1)))
         (x2 (float (car p2)))
         (y2 (float (cdr p2))))
-    (cond ((eq y1 y2) 'horizontal)
-          ((eq x1 x2) 'vertical)
+    (cond ((eq y1 y2) 0)         ; horizontal
+          ((eq x1 x2) 50)        ;'vertical
           (t (/ (- y2 y1) (- x2 x1))))))
 
 (defun moe-stroke-get-y (m x b)
   "y = mx + b"
   (+ (* m x) b))
 
-;; chars
-;;  - / \ | +
 
-(defun moe-stroke-get-pixel-char (m)
-  "M is slope rate"
-  (cond ())
-  )
-
+(defun moe-stroke-get-pixel-char (canvas x y m)
+  "回傳位置應該放啥char，
+X Y is counted from 1,
+M is slope rate."
+  ;; Available chars:
+  ;;  - / \ | +
+  (let ((sym (nth (1- x) (nth (1- y) canvas))))
+    (cond ((eq sym 0)
+           (cond ((> (abs m) 2)      '|)
+                 ((> m 1)            '/)
+                 ((< (abs m) 1)      '-)
+                 ((< m  -1)          '\\)
+                 (t                  '*)))
+          ((memq sym '(| / \\))
+           (if (< (abs m) 1) '+ sym))
+          (t   ;; sym is - or *
+           (if (< (abs m) 1) sym '+)))))
 
 (defun moe-stroke-replace-pixel (canvas x y elem)
   "Return a new CANVAS. X, Y is counted from 1
@@ -135,13 +145,6 @@ P1              P2
                           ""))
              canvas
              "\n"))
-
-
-
-(let* ((canvas (moe-stroke-get-empty-canvas))
-       (canvas-size (moe-stroke-get-canvas-size))
-       
-       ))
 
 (defun moe-stroke-calculate-xy-on-canvas (raw-xy canvas-size)
   "Example:
