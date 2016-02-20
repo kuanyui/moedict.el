@@ -129,6 +129,7 @@
 (apply #'moe-stroke-draw-line (moe-stroke-get-empty-canvas)
        (car (moe-stroke-get-stroke-data "萌")))
 
+(apply #'moe-stroke-get-slope-rate (car (moe-stroke-get-stroke-data "萌")))
 
 (defun moe-stroke-get-slope-rate (p1 p2)
   "Get slope rate of two points. <ex>
@@ -140,7 +141,7 @@ P1              P2
         (y2 (float (cdr p2))))
     (cond ((eq y1 y2) 0)         ; horizontal
           ((eq x1 x2) 50)        ;'vertical
-          (t (/ (- y2 y1) (- x2 x1))))))
+          (t (/ (- y1 y2) (- x2 x1))))))
 
 (defun moe-stroke-get-b (y m x)
   "y - mx = b"
