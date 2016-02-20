@@ -23,6 +23,10 @@
 ;;
 
 ;;; Code:
+;;(defconst moe-stroke-directory (file-name-directory load-file-name))
+(defconst moe-stroke-directory (file-name-directory (buffer-file-name)))
+(setq moe-stroke-xml-directory (concat moe-stroke-directory "zh-stroke-data/utf8/"))
+(setq moe-stroke-json-directory (concat moe-stroke-directory "zh-stroke-data/json/"))
 
 (make-list 2050
            (make-list 2050 0))
@@ -32,13 +36,33 @@
 (defun moe-stroke-dec-to-hex (decimal-number)
   (format "%x" decimal-number))
 
-(defun moe-stroke-get-filename (zh-string)
-  (let* ((hex-string (moe-stroke-dec-to-hex (string-to-char zh-string)))
-         ())
-    )
-  )
+(defun moe-stroke-get-file-path (character)
+  "CHARACTER is a Chinese STRING, not CHAR type in Emacs Lisp"
+  (let ((hex-string (moe-stroke-dec-to-hex (string-to-char character))))
+    (concat moe-stroke-json-directory hex-string ".json")))
 
-(moe-stroke-get-filename "萌")
+(defun moe-stroke-get-raw-tracks (character)
+  "Return a list. <ex>
+([((y . 216) (x . 703))                   ; A sub-track
+  ((size . 85) (y . 688) (x . 792))]      ; A full track done (stroke #1).
+ [((y . 527) (x . 436))                   ; A sub-track
+  ((size . 95) (y . 416) (x . 956))] ...) ; A full track done (stroke #2)"
+  (mapcar (lambda (x) (cdr (car x)))
+          (json-read-file (moe-stroke-get-file-path character))))
+
+(defun moe-stroke-get-stroke (character)
+  "Return a list. <ex>
+
+"
+  (mapcar (lambda (stroke)
+            (map 'list (lambda (sub-stroke)
+                         (let ((x ())
+                               (y ()))
+              )))
+          (moe-stroke-get-raw-tracks character)))
+
+(moe-stroke-get-raw-tracks "萌")
+
 
 
 
