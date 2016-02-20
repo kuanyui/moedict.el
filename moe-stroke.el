@@ -1,4 +1,4 @@
-ttps://github.com/g0v/zh-stroke-data.git;;; moe-stroke.el ---                                    -*- lexical-binding: t; -*-
+;;; moe-stroke.el ---                                    -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2016  kuanyui
 
@@ -83,17 +83,34 @@ ttps://github.com/g0v/zh-stroke-data.git;;; moe-stroke.el ---                   
 
 (moe-stroke-get-stroke "萌")
 
+-- / \ | +
+
 ;; 703 2050
 
 (defun moe-stroke-get-function (p1 p2)
   "Get the line function (y = ax + b) of two points.  <ex>
-P1          P2.
-(703 . 216) (792 . 688)"
+P1              P2
+'(703 . 216)    '(792 . 688)"
+  (lambda (var-x)
+    ))
 
-  )
+(defun moe-stroke-get-slope-rate (p1 p2)
+  "Get slope rate of two points. <ex>
+P1              P2
+'(703 . 216)    '(792 . 688)"
+  (cond ((eq y1 y2) 'horizontal)
+        ((eq x1 x2) 'vertical)
+        (t (let ((x1 (float (car p1)))
+                 (y1 (float (cdr p1)))
+                 (x2 (float (car p2)))
+                 (y2 (float (cdr p2))))
+             (/ (- y2 y1) (- x2 x1))))))
+
+(moe-stroke-get-slope-rate '(703 . 216) '(792 . 688))
 
 (defun moe-stroke-get-point-percentage (xy)
-  "input is (703 . 216)
+  "Raw canvas is 2050 x 2050
+input is raw point <ex> (703 . 216)
 output is (0.3429268292682927 . 0.10536585365853658)"
   (cons (/ (car xy) 2050.0)
         (/ (cdr xy) 2050.0)))
