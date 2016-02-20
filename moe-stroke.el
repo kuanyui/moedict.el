@@ -128,23 +128,29 @@ P1              P2
 (defun moe-stroke-set-nth (n elem list)
   (setcar (nthcdr n list) elem))
 
+(defun moe-stroke-format-canvas (canvas)
+  (mapconcat (lambda (line)
+               (mapconcat (lambda (sym) (if (eq sym 0) " " (symbol-name sym)))
+                          line
+                          ""))
+             canvas
+             "\n"))
+
+
 
 (let* ((canvas (moe-stroke-get-empty-canvas))
        (canvas-size (moe-stroke-get-canvas-size))
-       (canvas-width (car canvas-size))
-       (canvas-height (cdr canvas-size))
-       (raw-p '(703 . 216))
-       (raw-x (car raw-p))
-       (raw-y (cdr raw-p))
-       (x )
+       
        ))
 
-(defun moe-stroke-calculate-xy (raw-xy canvas-size)
+(defun moe-stroke-calculate-xy-on-canvas (raw-xy canvas-size)
   "Example:
 RAW-XY       '(703 . 216)
 percents     '(0.3429268292682927 . 0.10536585365853658)
 CANVAS-SIZE  '(100 . 50)
 XY           '(34  . 5)
+
+2050 is the max value of raw data
 "
   (let ((percents (cons (/ (car raw-xy) 2050.0)
                         (/ (cdr raw-xy) 2050.0))))
