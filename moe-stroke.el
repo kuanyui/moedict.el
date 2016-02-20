@@ -71,13 +71,32 @@ ttps://github.com/g0v/zh-stroke-data.git;;; moe-stroke.el ---                   
 ;; Canvas
 ;; ======================================================
 
-(defun moe-stroke-get-canvas ()
+(defun moe-stroke-get-empty-canvas ()
+  "0 is empty, <ex> 4 x 3 canvas
+((0 0 0 0)
+ (0 0 0 0)
+ (0 0 0 0))"
   (let ((x (/ (window-width) 2))
         (y (window-height)))
     (make-list y
                (make-list x 0))))
 
 (moe-stroke-get-stroke "萌")
+
+;; 703 2050
+
+(defun moe-stroke-get-function (p1 p2)
+  "Get the line function (y = ax + b) of two points.  <ex>
+P1          P2.
+(703 . 216) (792 . 688)"
+
+  )
+
+(defun moe-stroke-get-point-percentage (xy)
+  "input is (703 . 216)
+output is (0.3429268292682927 . 0.10536585365853658)"
+  (cons (/ (car xy) 2050.0)
+        (/ (cdr xy) 2050.0)))
 
 (provide 'moe-stroke)
 ;;; stroke.el ends here
