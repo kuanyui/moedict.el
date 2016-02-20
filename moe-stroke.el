@@ -1,4 +1,4 @@
-;;; moe-stroke.el ---                                    -*- lexical-binding: t; -*-
+ttps://github.com/g0v/zh-stroke-data.git;;; moe-stroke.el ---                                    -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2016  kuanyui
 
@@ -28,10 +28,12 @@
 (setq moe-stroke-xml-directory (concat moe-stroke-directory "zh-stroke-data/utf8/"))
 (setq moe-stroke-json-directory (concat moe-stroke-directory "zh-stroke-data/json/"))
 
-(make-list 2050
-           (make-list 2050 0))
 
 (string-to-char "萌")
+
+;; ======================================================
+;; Get Data
+;; ======================================================
 
 (defun moe-stroke-dec-to-hex (decimal-number)
   (format "%x" decimal-number))
@@ -43,28 +45,39 @@
 
 (defun moe-stroke-get-raw-tracks (character)
   "Return a list. <ex>
-([((y . 216) (x . 703))                   ; A sub-track
+([((y . 216) (x . 703))                   ; A sub-track (sub-stroke)
   ((size . 85) (y . 688) (x . 792))]      ; A full track done (stroke #1).
- [((y . 527) (x . 436))                   ; A sub-track
+ [((y . 527) (x . 436))                   ; A sub-track (sub-stroke)
   ((size . 95) (y . 416) (x . 956))] ...) ; A full track done (stroke #2)"
-  (mapcar (lambda (x) (cdr (car x)))
-          (json-read-file (moe-stroke-get-file-path character))))
+(mapcar (lambda (x) (cdr (car x)))
+        (json-read-file (moe-stroke-get-file-path character))))
 
 (defun moe-stroke-get-stroke (character)
   "Return a list. <ex>
-
+(((703 . 216) (792 . 688))       ; (sub-stroke sub-stroke) ; (stroke #1)
+ ((436 . 527) (956 . 416))       ; (sub-stroke sub-stroke) ; (stroke #2)
+ ((1082 . 459) (1615 . 372))    ; (sub-stroke sub-stroke) ; (stroke #3)
+ ... )
 "
   (mapcar (lambda (stroke)
             (map 'list (lambda (sub-stroke)
-                         (let ((x ())
-                               (y ()))
-              )))
+                         (let ((x (cdr (assq 'x sub-stroke)))
+                               (y (cdr (assq 'y sub-stroke))))
+                           (cons x y)))
+                 stroke))
           (moe-stroke-get-raw-tracks character)))
 
-(moe-stroke-get-raw-tracks "萌")
+;; ======================================================
+;; Canvas
+;; ======================================================
 
+(defun moe-stroke-get-canvas ()
+  (let ((x (/ (window-width) 2))
+        (y (window-height)))
+    (make-list y
+               (make-list x 0))))
 
-
+(moe-stroke-get-stroke "萌")
 
 (provide 'moe-stroke)
 ;;; stroke.el ends here
