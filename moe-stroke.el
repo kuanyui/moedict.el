@@ -106,25 +106,15 @@ P1              P2
 ;;  - / \ | +
 
 (defun moe-stroke-replace-pixel (canvas x y elem)
-  "Return a new canvas. X, Y is counted from 1
+  "Return a new CANVAS. X, Y is counted from 1
 '((x1 x2 x3 x4 x5)  ; y1
   (x1 x2 x3 x4 x5)  ; y2
-  (x1 x2 x3 x4 x5)  ; y3
-   "
+  (x1 x2 x3 x4 x5)  ; y3 "
   (let* ((-x (1- x))
          (-y (1- y))
          (old-line (nth -y canvas))
          (new-line (moe-stroke-set-nth -x elem old-line)))
     (moe-stroke-set-nth -y new-line canvas)))
-
-(moe-stroke-replace-pixel '((0 0 0) (0 0 0) (0 0 0)) 2 3 'hi)
-
-(defun moe-stroke-set-2d-list (x y elem list)
-  (let )
-  (moe-stroke-set-nth y
-                      (nth x list)
-                      )
-  )
 
 (defun moe-stroke-set-nth (n elem list)
   (setcar (nthcdr n list) elem)
