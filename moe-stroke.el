@@ -103,6 +103,7 @@ P1              P2
   "y = mx + b"
   (+ (* m x) b))
 
+;; chars
 ;;  - / \ | +
 
 (defun moe-stroke-replace-pixel (canvas x y elem)
@@ -112,13 +113,15 @@ P1              P2
   (x1 x2 x3 x4 x5)  ; y3 "
   (let* ((-x (1- x))
          (-y (1- y))
-         (old-line (nth -y canvas))
-         (new-line (moe-stroke-set-nth -x elem old-line)))
-    (moe-stroke-set-nth -y new-line canvas)))
+         (line (nth -y canvas)))
+    (moe-stroke-set-nth -x elem line)
+    (moe-stroke-set-nth -y line canvas)
+    canvas))
+
 
 (defun moe-stroke-set-nth (n elem list)
-  (setcar (nthcdr n list) elem)
-  list)
+  (setcar (nthcdr n list) elem))
+
 
 
 (let* ((canvas (moe-stroke-get-empty-canvas))
