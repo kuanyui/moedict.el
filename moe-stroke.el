@@ -52,7 +52,7 @@
 (mapcar (lambda (x) (cdr (car x)))
         (json-read-file (moe-stroke-get-file-path character))))
 
-(defun moe-stroke-get-stroke (character)
+(defun moe-stroke-get-stroke-data (character)
   "Return a list. <ex>
 (((703 . 216) (792 . 688) (300 . 500))   ; (sub-stroke sub-stroke) ; (stroke #1)
  ((436 . 527) (956 . 416))               ; (sub-stroke sub-stroke) ; (stroke #2)
@@ -89,7 +89,7 @@
     (make-list (cdr xy)
                (make-list (car xy) 0))))
 
-(moe-stroke-get-stroke "萌")
+(moe-stroke-get-stroke-data "萌")
 
 '(((703 . 216) (792 . 688)) ((436 . 527) (956 . 416)) ((1082 . 459) (1615 . 372)) ((1359 . 149) (1195 . 672)) ((433 . 853) (430 . 1529)) ((481 . 836) (756 . 761) (870 . 828) (834 . 1079) (809 . 1546)) ((493 . 1186) (764 . 1162)) ((483 . 1476) (744 . 1456)) ((1110 . 740) (1099 . 1276) (1000 . 1648) (743 . 1888)) ((1170 . 738) (1489 . 646) (1612 . 692) (1589 . 1080) (1588 . 1574) (1616 . 1942) (1319 . 1696)) ((1158 . 1099) (1516 . 1033)) ((1136 . 1373) (1525 . 1318)))
 
@@ -119,15 +119,15 @@
                      (char (moe-stroke-get-pixel-char canvas x y m))
                      (new-canvas (moe-stroke-replace-pixel canvas x y char)))
                 (moe-stroke-draw-canvas new-canvas)
+                (sit-for 0.05)
                 ))
       (dotimes (x delta-x)
         )
       ))
   )
 
-(moe-stroke-draw-line (moe-stroke-get-empty-canvas)
-                      '(703 . 216)
-                      '(792 . 688))
+(apply #'moe-stroke-draw-line (moe-stroke-get-empty-canvas)
+       (car (moe-stroke-get-stroke-data "萌")))
 
 
 (defun moe-stroke-get-slope-rate (p1 p2)
