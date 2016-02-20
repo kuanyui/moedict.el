@@ -54,7 +54,7 @@
 
 (defun moe-stroke-get-stroke-data (character)
   "Return a list. <ex>
-(((703 . 216) (792 . 688) (300 . 500))   ; (sub-stroke sub-stroke) ; (stroke #1)
+(((703 . 216) (792 . 688) (300 . 500))   ; (sub-stroke sub-stroke sub-stroke) ; (stroke #1)
  ((436 . 527) (956 . 416))               ; (sub-stroke sub-stroke) ; (stroke #2)
  ((1082 . 459) (1615 . 372))             ; (sub-stroke sub-stroke) ; (stroke #3)
  ... )
@@ -103,36 +103,43 @@
 
 
 (defun moe-stroke-draw-line (canvas p1 p2)
-  (let* ((canvas-size (moe-stroke-get-canvas-size))
+  (let* (
+         (m (moe-stroke-get-slope-rate p1 p2))
+         (raw-p1x (car p1))
+         (raw-p1y (cdr p1))
+         (canvas-size (moe-stroke-get-canvas-size))
          (canvas-height (cdr canvas-size))
          (height-zoom-rate (/ canvas-height 2050.0))
-         (m (moe-stroke-get-slope-rate p1 p2))
-         (p1-xy (moe-stroke-calculate-xy-on-canvas p1 canvas-size))
-         (p2-xy (moe-stroke-calculate-xy-on-canvas p2 canvas-size))
+         (raw-b (moe-stroke-get-b raw-p1x raw-p1y m))
+         (b (floor (* raw-b height-zoom-rate)))
+         (p1-xy (moe-stroke-calculate-xy-on-canvas p1 canvas-size)) ; (34 . 5)
+         (p2-xy (moe-stroke-calculate-xy-on-canvas p2 canvas-size)) ; (39 . 17)
          (p1x (car p1-xy))
          (p2x (car p2-xy))
          (p1y (cdr p1-xy))
-         (p2y (cdr p2-xy))
-         (raw-b (moe-stroke-get-b p1y m p1x))
-         (b (floor (* raw-b height-zoom-rate)))
-         (delta-x (- p2x p1x)))
-    (if (>= delta-x 0)
-        (loop for x from p1x to p2x do
-              (let* ((y (moe-stroke-get-y m x b))
-                     (char (moe-stroke-get-pixel-char canvas x y m))
-                     (new-canvas (moe-stroke-replace-pixel canvas x y char)))
-                (moe-stroke-draw-canvas new-canvas)
-                (sit-for 0.05)
-                ))
-      (dotimes (x delta-x)
-        )
-      ))
-  )
+         (p2y (cdr p2-xy)))
+    (list :m m :b b
+          (loop for x from p1x to p2x collect
+                (let* ((y (moe-stroke-get-y m x b)))
+                  ;; (char (moe-stroke-get-pixel-char canvas x y m))
+                  ;; (new-canvas (moe-stroke-replace-pixel canvas x y char)))
+                  ;; (moe-stroke-draw-canvas new-canvas)
+                  ;; (sit-for 0.1)
+                  (cons x y)
+                  ))
+          )))
 
 (apply #'moe-stroke-draw-line (moe-stroke-get-empty-canvas)
        (car (moe-stroke-get-stroke-data "萌")))
 
-(apply #'moe-stroke-get-slope-rate (car (moe-stroke-get-stroke-data "萌")))
+
+(let* ((pp (car (moe-stroke-get-stroke-data "萌")))
+       (p1 (nth 0 pp))
+       (p2 (nth 1 pp))
+       (m (moe-stroke-get-slope-rate p1 p2))
+       (b (moe-stroke-get-b (car p1) (cdr p1) m))
+       )
+  (list m b))
 
 (defun moe-stroke-get-slope-rate (p1 p2)
   "Get slope rate of two points. <ex>
@@ -146,13 +153,18 @@ P1              P2
           ((eq x1 x2) 50)        ;'vertical
           (t (/ (- y1 y2) (- x2 x1))))))
 
-(defun moe-stroke-get-b (y m x)
-  "y - mx = b
-X, Y is must on canvas"
-  (- (* m x) y))
+(defun moe-stroke-get-b (raw-x raw-y m)
+  "y = mx + b
+   b = y - mx
+But the base point of stroke data is left-top, so Y := -Y
+   b = (-y) - mx"
+  (- (- raw-y)
+     (* m raw-x)))
 
 (defun moe-stroke-get-y (m x b)
-  "y = mx + b"
+  "y = mx + b,
+But the base point of stroke data is left-top, so Y := -Y
+   y = -1 * (mx + b)"
   (floor (+ (* m x) b)))
 
 
