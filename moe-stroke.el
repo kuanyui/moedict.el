@@ -106,6 +106,12 @@ P1              P2
 ;; chars
 ;;  - / \ | +
 
+(defun moe-stroke-get-pixel-char (m)
+  "M is slope rate"
+  (cond ())
+  )
+
+
 (defun moe-stroke-replace-pixel (canvas x y elem)
   "Return a new CANVAS. X, Y is counted from 1
 '((x1 x2 x3 x4 x5)  ; y1
@@ -123,7 +129,6 @@ P1              P2
   (setcar (nthcdr n list) elem))
 
 
-
 (let* ((canvas (moe-stroke-get-empty-canvas))
        (canvas-size (moe-stroke-get-canvas-size))
        (canvas-width (car canvas-size))
@@ -131,13 +136,24 @@ P1              P2
        (raw-p '(703 . 216))
        (raw-x (car raw-p))
        (raw-y (cdr raw-p))
-       ( )))
+       (x )
+       ))
 
-(defun moe-stroke-get-point-percentage (xy)
-  "Input is a raw point <ex> (703 . 216)
-Output is (0.3429268292682927 . 0.10536585365853658)"
-  (cons (/ (car xy) 2050.0)
-        (/ (cdr xy) 2050.0)))
+(defun moe-stroke-calculate-xy (raw-xy canvas-size)
+  "Example:
+RAW-XY       '(703 . 216)
+percents     '(0.3429268292682927 . 0.10536585365853658)
+CANVAS-SIZE  '(100 . 50)
+XY           '(34  . 5)
+"
+  (let ((percents (cons (/ (car raw-xy) 2050.0)
+                        (/ (cdr raw-xy) 2050.0))))
+    (cons (round (* (car canvas-size) (car percents)))
+          (round (* (cdr canvas-size) (cdr percents))))))
+
+
+(defun moe-stroke-get-point-in-canvas
+    ())
 
 (provide 'moe-stroke)
 ;;; stroke.el ends here
