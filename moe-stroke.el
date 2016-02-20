@@ -54,9 +54,9 @@
 
 (defun moe-stroke-get-stroke (character)
   "Return a list. <ex>
-(((703 . 216) (792 . 688))       ; (sub-stroke sub-stroke) ; (stroke #1)
- ((436 . 527) (956 . 416))       ; (sub-stroke sub-stroke) ; (stroke #2)
- ((1082 . 459) (1615 . 372))    ; (sub-stroke sub-stroke) ; (stroke #3)
+(((703 . 216) (792 . 688) (300 . 500))   ; (sub-stroke sub-stroke) ; (stroke #1)
+ ((436 . 527) (956 . 416))               ; (sub-stroke sub-stroke) ; (stroke #2)
+ ((1082 . 459) (1615 . 372))             ; (sub-stroke sub-stroke) ; (stroke #3)
  ... )
 "
   (mapcar (lambda (stroke)
@@ -71,47 +71,47 @@
 ;; Canvas
 ;; ======================================================
 
+(defun moe-stroke-get-canvas-size ()
+  (let* ((size (min (/ (window-width) 2)
+                    (window-height)))
+         (x (* size 2))
+         (y size))
+    (cons x y)))
+
 (defun moe-stroke-get-empty-canvas ()
-  "0 is empty, <ex> 4 x 3 canvas
-((0 0 0 0)
- (0 0 0 0)
- (0 0 0 0))"
-  (let ((x (/ (window-width) 2))
-        (y (window-height)))
-    (make-list y
-               (make-list x 0))))
+  "0 is empty, <ex> 4 x 4 canvas"
+  (let ((xy (moe-stroke-get-canvas-size)))
+    (make-list (cdr xy)
+               (make-list (car xy) 0))))
 
-(moe-stroke-get-stroke "萌")
+  (moe-stroke-get-stroke "萌")
 
--- / \ | +
-
-;; 703 2050
-
-(defun moe-stroke-get-function (p1 p2)
-  "Get the line function (y = ax + b) of two points.  <ex>
-P1              P2
-'(703 . 216)    '(792 . 688)"
-  (lambda (var-x)
-    ))
+;;  -- / \ | +
 
 (defun moe-stroke-get-slope-rate (p1 p2)
   "Get slope rate of two points. <ex>
 P1              P2
 '(703 . 216)    '(792 . 688)"
-  (cond ((eq y1 y2) 'horizontal)
-        ((eq x1 x2) 'vertical)
-        (t (let ((x1 (float (car p1)))
-                 (y1 (float (cdr p1)))
-                 (x2 (float (car p2)))
-                 (y2 (float (cdr p2))))
-             (/ (- y2 y1) (- x2 x1))))))
+  (let ((x1 (float (car p1)))
+        (y1 (float (cdr p1)))
+        (x2 (float (car p2)))
+        (y2 (float (cdr p2))))
+    (cond ((eq y1 y2) 'horizontal)
+          ((eq x1 x2) 'vertical)
+          (t (/ (- y2 y1) (- x2 x1))))))
+
+(defun moe-stroke-get-y (m x b)
+  "y = mx + b"
+  (+ (* m x) b))
 
 (moe-stroke-get-slope-rate '(703 . 216) '(792 . 688))
+(defun moe-stroke-get-pixel-size ()
+  (/ 2050.0 )
+  )
 
 (defun moe-stroke-get-point-percentage (xy)
-  "Raw canvas is 2050 x 2050
-input is raw point <ex> (703 . 216)
-output is (0.3429268292682927 . 0.10536585365853658)"
+  "Input is a raw point <ex> (703 . 216)
+Output is (0.3429268292682927 . 0.10536585365853658)"
   (cons (/ (car xy) 2050.0)
         (/ (cdr xy) 2050.0)))
 
