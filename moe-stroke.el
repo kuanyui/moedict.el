@@ -95,33 +95,34 @@
         (loop repeat y do
               (insert (make-string x (string-to-char " ")) "\n"))))))
 
+(defmacro ttt ()
+  `(cons (line-number-at-pos (point))
+         (current-column)
+         ))
 
-
-(defun moe-stroke-draw-line (p1 p2)
+(defun moe-stroke-draw-line (raw-p1 raw-p2)
   (with-current-buffer moe-stroke-buffer-name
     (let* ((buffer-read-only nil)
-           (m (moe-stroke-get-slope-rate p1 p2))
-           (raw-p1x (car p1))
-           (raw-p1y (cdr p1))
+           (m (moe-stroke-get-slope-rate raw-p1 raw-p2))
            (canvas-size (moe-stroke-get-canvas-size))
            (canvas-height (cdr canvas-size))
-           (height-zoom-rate (/ canvas-height 2050.0))
-           (raw-b (moe-stroke-get-raw-b raw-p1x raw-p1y m))
-           (b (floor (* raw-b height-zoom-rate))) ; `b' means y = ax + b
-           (p1-xy (moe-stroke-calculate-xy-on-canvas p1 moe-stroke-canvas-width moe-stroke-canvas-height))
-           (p2-xy (moe-stroke-calculate-xy-on-canvas p2 moe-stroke-canvas-width moe-stroke-canvas-height))
-           (p1x (car p1-xy))
-           (p2x (car p2-xy))
-           ;; Unused
-           ;; (p1y (cdr p1-xy))
-           ;; (p2y (cdr p2-xy))
+           (canvas-height-zoom-rate (/ canvas-height 2050.0))
+           ;;(raw-b (moe-stroke-get-raw-b raw-p1x raw-p1y m))
+           ;; (b (floor (* raw-b canvas-height-zoom-rate))) ; `b' means y = ax + b
+           (p1 (moe-stroke-calculate-xy-on-canvas raw-p1 moe-stroke-canvas-width moe-stroke-canvas-height))
+           (p2 (moe-stroke-calculate-xy-on-canvas raw-p2 moe-stroke-canvas-width moe-stroke-canvas-height))
+           (p1/x (car p1))
+           (p2/x (car p2))
+           (p1/y (cdr p1))
+           (p2/y (cdr p2))
+           (b (moe-stroke-get-b p1/x p1/y m))
            )
-      (loop for x from p1x to p2x do
+      (loop for x from p1/x to p2/x do
             (let* ((y (moe-stroke-get-y m x b))
-                   (original-char (progn (goto-char (point-min))
-                                         (next-line y)
-                                         (right-char x)
-                                         (char-before (point))))
+                   (original-char (progn (goto-char (point-min)) (ttt)
+                                         (forward-line y) (ttt)
+                                         (forward-char x) (ttt)
+                                         (char-to-string (char-before (point)))))
                    (new-char (moe-stroke-get-pixel-char original-char m)))
               (delete-char 1)
               (insert new-char)
