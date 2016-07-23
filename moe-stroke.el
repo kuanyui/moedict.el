@@ -23,13 +23,12 @@
 ;;
 
 ;;; Code:
-;;(defconst moe-stroke-directory (file-name-directory load-file-name))
-(defconst moe-stroke-directory (file-name-directory (buffer-file-name)))
+;;;;;;;(defconst moe-stroke-directory (file-name-directory load-file-name))
+
+(setq moe-stroke-directory (file-name-directory (buffer-file-name)))
 (setq moe-stroke-xml-directory (concat moe-stroke-directory "zh-stroke-data/utf8/"))
 (setq moe-stroke-json-directory (concat moe-stroke-directory "zh-stroke-data/json/"))
 (setq moe-stroke-buffer-name "*moe-stroke*")
-
-(string-to-char "萌")
 
 ;; ======================================================
 ;; Get Data
@@ -45,18 +44,18 @@
 
 (defun moe-stroke-get-raw-tracks (character)
   "Return a list. <ex>
-([((y . 216) (x . 703))                   ; A sub-track (sub-stroke)
-  ((size . 85) (y . 688) (x . 792))]      ; A full track done (stroke #1).
- [((y . 527) (x . 436))                   ; A sub-track (sub-stroke)
-  ((size . 95) (y . 416) (x . 956))] ...) ; A full track done (stroke #2)"
-(mapcar (lambda (x) (cdr (car x)))
+ ([((y . 216) (x . 703))                   ; A sub-track (sub-stroke)
+   ((size . 85) (y . 688) (x . 792))]      ; A full track done (stroke #1).
+  [((y . 527) (x . 436))                   ; A sub-track (sub-stroke)
+   ((size . 95) (y . 416) (x . 956))] ...) ; A full track done (stroke #2)"
+  (mapcar (lambda (x) (cdr (car x)))
         (json-read-file (moe-stroke-get-file-path character))))
 
 (defun moe-stroke-get-stroke-data (character)
   "Return a list. <ex>
-(((703 . 216) (792 . 688) (300 . 500))   ; (sub-stroke sub-stroke sub-stroke) ; (stroke #1)
- ((436 . 527) (956 . 416))               ; (sub-stroke sub-stroke) ; (stroke #2)
- ((1082 . 459) (1615 . 372))             ; (sub-stroke sub-stroke) ; (stroke #3)
+ (((703 . 216) (792 . 688) (300 . 500))   ; (sub-stroke sub-stroke sub-stroke) ; (stroke #1)
+  ((436 . 527) (956 . 416))               ; (sub-stroke sub-stroke) ; (stroke #2)
+  ((1082 . 459) (1615 . 372))             ; (sub-stroke sub-stroke) ; (stroke #3)
  ... )
 "
   (mapcar (lambda (stroke)
@@ -81,65 +80,53 @@
                       (window-height)))
            (x (* size 2))
            (y size))
+      (setq-local moe-stroke-canvas-width x)
+      (setq-local moe-stroke-canvas-height y)
       (cons x y))))
 
-(defun moe-stroke-get-empty-canvas ()
-  "0 means empty pixel"
-  (let ((xy (moe-stroke-get-canvas-size)))
-    (make-list (cdr xy)
-               (make-list (car xy) 0))))
+(defun moe-stroke-init-canvas ()
+  "Fill canvas buffer with spaces"
+  (let* ((xy (moe-stroke-get-canvas-size))
+         (x (car xy))
+         (y (cdr xy)))
+    (with-current-buffer moe-stroke-buffer-name
+      (let (buffer-read-only)
+        (delete-region (point-min) (point-max))
+        (loop repeat y do
+              (insert (make-string x (string-to-char " ")) "\n"))))))
 
-(moe-stroke-get-stroke-data "萌")
-
-'(((703 . 216) (792 . 688)) ((436 . 527) (956 . 416)) ((1082 . 459) (1615 . 372)) ((1359 . 149) (1195 . 672)) ((433 . 853) (430 . 1529)) ((481 . 836) (756 . 761) (870 . 828) (834 . 1079) (809 . 1546)) ((493 . 1186) (764 . 1162)) ((483 . 1476) (744 . 1456)) ((1110 . 740) (1099 . 1276) (1000 . 1648) (743 . 1888)) ((1170 . 738) (1489 . 646) (1612 . 692) (1589 . 1080) (1588 . 1574) (1616 . 1942) (1319 . 1696)) ((1158 . 1099) (1516 . 1033)) ((1136 . 1373) (1525 . 1318)))
 
 
-(defun moe-stroke-draw-canvas (canvas)
-  "Overwrite *moe-stroke* buffer with CANVAS"
+(defun moe-stroke-draw-line (p1 p2)
   (with-current-buffer moe-stroke-buffer-name
-    (let ((inhibit-read-only t))
-      (delete-region (point-min) (point-max))
-      (insert (moe-stroke-format-canvas canvas)))))
-
-
-(defun moe-stroke-draw-line (canvas p1 p2)
-  (let* (
-         (m (moe-stroke-get-slope-rate p1 p2))
-         (raw-p1x (car p1))
-         (raw-p1y (cdr p1))
-         (canvas-size (moe-stroke-get-canvas-size))
-         (canvas-height (cdr canvas-size))
-         (height-zoom-rate (/ canvas-height 2050.0))
-         (raw-b (moe-stroke-get-b raw-p1x raw-p1y m))
-         (b (floor (* raw-b height-zoom-rate)))
-         (p1-xy (moe-stroke-calculate-xy-on-canvas p1 canvas-size)) ; (34 . 5)
-         (p2-xy (moe-stroke-calculate-xy-on-canvas p2 canvas-size)) ; (39 . 17)
-         (p1x (car p1-xy))
-         (p2x (car p2-xy))
-         (p1y (cdr p1-xy))
-         (p2y (cdr p2-xy)))
-    (list :m m :b b
-          (loop for x from p1x to p2x collect
-                (let* ((y (moe-stroke-get-y m x b)))
-                  ;; (char (moe-stroke-get-pixel-char canvas x y m))
-                  ;; (new-canvas (moe-stroke-replace-pixel canvas x y char)))
-                  ;; (moe-stroke-draw-canvas new-canvas)
-                  ;; (sit-for 0.1)
-                  (cons x y)
-                  ))
-          )))
-
-(apply #'moe-stroke-draw-line (moe-stroke-get-empty-canvas)
-       (car (moe-stroke-get-stroke-data "萌")))
-
-
-(let* ((pp (car (moe-stroke-get-stroke-data "萌")))
-       (p1 (nth 0 pp))
-       (p2 (nth 1 pp))
-       (m (moe-stroke-get-slope-rate p1 p2))
-       (b (moe-stroke-get-b (car p1) (cdr p1) m))
-       )
-  (list m b))
+    (let* ((buffer-read-only nil)
+           (m (moe-stroke-get-slope-rate p1 p2))
+           (raw-p1x (car p1))
+           (raw-p1y (cdr p1))
+           (canvas-size (moe-stroke-get-canvas-size))
+           (canvas-height (cdr canvas-size))
+           (height-zoom-rate (/ canvas-height 2050.0))
+           (raw-b (moe-stroke-get-raw-b raw-p1x raw-p1y m))
+           (b (floor (* raw-b height-zoom-rate))) ; `b' means y = ax + b
+           (p1-xy (moe-stroke-calculate-xy-on-canvas p1 moe-stroke-canvas-width moe-stroke-canvas-height))
+           (p2-xy (moe-stroke-calculate-xy-on-canvas p2 moe-stroke-canvas-width moe-stroke-canvas-height))
+           (p1x (car p1-xy))
+           (p2x (car p2-xy))
+           ;; Unused
+           ;; (p1y (cdr p1-xy))
+           ;; (p2y (cdr p2-xy))
+           )
+      (loop for x from p1x to p2x do
+            (let* ((y (moe-stroke-get-y m x b))
+                   (original-char (progn (goto-char (point-min))
+                                         (next-line y)
+                                         (right-char x)
+                                         (char-before (point))))
+                   (new-char (moe-stroke-get-pixel-char original-char m)))
+              (delete-char 1)
+              (insert new-char)
+              (sit-for 0.1)
+              )))))
 
 (defun moe-stroke-get-slope-rate (p1 p2)
   "Get slope rate of two points. <ex>
@@ -153,7 +140,7 @@ P1              P2
           ((eq x1 x2) 50)        ;'vertical
           (t (/ (- y1 y2) (- x2 x1))))))
 
-(defun moe-stroke-get-b (raw-x raw-y m)
+(defun moe-stroke-get-raw-b (raw-x raw-y m)
   "y = mx + b
    b = y - mx
 But the base point of stroke data is left-top, so Y := -Y
@@ -165,52 +152,27 @@ But the base point of stroke data is left-top, so Y := -Y
   "y = mx + b,
 But the base point of stroke data is left-top, so Y := -Y
    y = -1 * (mx + b)"
-  (floor (+ (* m x) b)))
+  (floor (- (+ (* m x) b))))
 
 
-(defun moe-stroke-get-pixel-char (canvas x y m)
+(defun moe-stroke-get-pixel-char (original-char m)
   "回傳位置應該放啥char，
 X Y is counted from 1,
 M is slope rate."
   ;; Available chars:
   ;;  - / \ | +
-  (let ((sym (nth (1- x) (nth (1- y) canvas))))
-    (cond ((eq sym 0)
-           (cond ((> (abs m) 2)      '|)
-                 ((> m 1)            '/)
-                 ((< (abs m) 1)      '-)
-                 ((< m  -1)          '\\)
-                 (t                  '*)))
-          ((memq sym '(| / \\))
-           (if (< (abs m) 1) '+ sym))
-          (t   ;; sym is - or *
-           (if (< (abs m) 1) sym '+)))))
+  (cond ((eq original-char " ")
+         (cond ((> (abs m) 2)      '|)
+               ((> m 1)            '/)
+               ((< (abs m) 1)      '-)
+               ((< m  -1)          '\\)
+               (t                  '*)))
+        ((memq original-char '("|" "/" "\\"))
+         (if (< (abs m) 1) "+" original-char))
+        (t   ;; sym is - or *
+         (if (< (abs m) 1) original-char "+"))))
 
-(defun moe-stroke-replace-pixel (canvas x y elem)
-  "Return a new CANVAS. X, Y is counted from 1
-'((x1 x2 x3 x4 x5)  ; y1
-  (x1 x2 x3 x4 x5)  ; y2
-  (x1 x2 x3 x4 x5)  ; y3 "
-  (let* ((-x (1- x))
-         (-y (1- y))
-         (line (nth -y canvas)))
-    (moe-stroke-set-nth -x elem line)
-    (moe-stroke-set-nth -y line canvas)
-    canvas))
-
-
-(defun moe-stroke-set-nth (n elem list)
-  (setcar (nthcdr n list) elem))
-
-(defun moe-stroke-format-canvas (canvas)
-  (mapconcat (lambda (line)
-               (mapconcat (lambda (sym) (if (eq sym 0) " " (symbol-name sym)))
-                          line
-                          ""))
-             canvas
-             "\n"))
-
-(defun moe-stroke-calculate-xy-on-canvas (raw-xy canvas-size)
+(defun moe-stroke-calculate-xy-on-canvas (raw-xy canvas-width canvas-height)
   "Example:
 RAW-XY       '(703 . 216)
 percents     '(0.3429268292682927 . 0.10536585365853658)
@@ -221,12 +183,18 @@ XY           '(34  . 5)
 "
   (let ((percents (cons (/ (car raw-xy) 2050.0)
                         (/ (cdr raw-xy) 2050.0))))
-    (cons (round (* (car canvas-size) (car percents)))
-          (round (* (cdr canvas-size) (cdr percents))))))
+    (cons (round (* canvas-width (car percents)))
+          (round (* canvas-height (cdr percents))))))
+(progn
+  (moe-stroke-init-canvas)
+  (mapc (lambda (stroke-points)
+          (loop for i from 0 to (- (length stroke-points) 2)
+                with p1 = (nth i stroke-points)
+                with p2 = (nth (1+ i) stroke-points)
+                do (moe-stroke-draw-line p1 p2)))
+        (moe-stroke-get-stroke-data "萌")
+        ))
 
-
-(defun moe-stroke-get-point-in-canvas
-    ())
 
 (provide 'moe-stroke)
 ;;; stroke.el ends here
