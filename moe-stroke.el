@@ -46,8 +46,8 @@
   '((((class color)) (:foreground "#949494" :background "##949494")))
   "This comment is necessary")
 
+'((((class color)) (:foreground "#626262" :background "##626262")))
 (defface moe-stroke-d3
-  '((((class color)) (:foreground "#626262" :background "##626262")))
   "This comment is necessary")
 
 (defface moe-stroke-d4
@@ -169,7 +169,7 @@ XY           '(34  . 5)
                ((<= brightness 0.8) (propertize moe-stroke-char 'face 'moe-stroke-d4))
                (t (propertize moe-stroke-char 'face 'moe-stroke-d5))
                ))
-      (sit-for 0.003))))
+      (sit-for 0.001))))
 
 (progn
   (moe-stroke-plot 1 5 0.2)
@@ -247,14 +247,14 @@ XY           '(34  . 5)
                       (setq intery (+ intery gradient)))))
     ))
 
-(progn
+(defun moe-stroke (char)
   (moe-stroke-reset-canvas)
   (mapc (lambda (stroke-points)
           (loop for i from 0 to (- (length stroke-points) 2)
-                with p1 = (nth i stroke-points)
-                with p2 = (nth (1+ i) stroke-points)
+                for p1 = (nth i stroke-points)
+                for p2 = (nth (1+ i) stroke-points)
                 do (moe-stroke-draw-line p1 p2)))
-        (moe-stroke-get-scaled-strokes-data "萌")
+        (moe-stroke-get-scaled-strokes-data char)
         ))
 
 
