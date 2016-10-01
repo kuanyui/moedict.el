@@ -1,4 +1,4 @@
-;;; moe-stroke.el ---                                    -*- lexical-binding: t; -*-
+;;; moedict-stroke.el ---                                    -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2016  kuanyui
 
@@ -23,38 +23,38 @@
 ;;
 
 ;;; Code:
-;;;;;;;(defconst moe-stroke-directory (file-name-directory load-file-name))
+;;;;;;;(defconst moedict-stroke-directory (file-name-directory load-file-name))
 
-(setq moe-stroke-directory (file-name-directory (buffer-file-name)))
-(setq moe-stroke-xml-directory (concat moe-stroke-directory "zh-stroke-data/utf8/"))
-(setq moe-stroke-json-directory (concat moe-stroke-directory "stroke-data-json/"))
-(setq moe-stroke-buffer-name "*moe-stroke*")
-(setq moe-stroke-char "█")
+(setq moedict-stroke-directory (file-name-directory (buffer-file-name)))
+(setq moedict-stroke-xml-directory (concat moedict-stroke-directory "zh-stroke-data/utf8/"))
+(setq moedict-stroke-json-directory (concat moedict-stroke-directory "stroke-data-json/"))
+(setq moedict-stroke-buffer-name "*moedict-stroke*")
+(setq moedict-stroke-char "█")
 ;; ======================================================
 ;; Faces
 ;; ======================================================
 
-(defface moe-stroke-background
+(defface moedict-stroke-background
   '((((class color)) (:foreground "#ffffff" :background "#ffffff")))
   "This comment is necessary")
 
-(defface moe-stroke-d1
+(defface moedict-stroke-d1
   '((((class color)) (:foreground "#c6c6c6" :background "##c6c6c6")))
   "This comment is necessary")
 
-(defface moe-stroke-d2
+(defface moedict-stroke-d2
   '((((class color)) (:foreground "#949494" :background "##949494")))
   "This comment is necessary")
 
-'((((class color)) (:foreground "#626262" :background "##626262")))
-(defface moe-stroke-d3
+(defface moedict-stroke-d3
+  '((((class color)) (:foreground "#626262" :background "##626262")))
   "This comment is necessary")
 
-(defface moe-stroke-d4
+(defface moedict-stroke-d4
   '((((class color)) (:foreground "#3a3a3a" :background "##3a3a3a")))
   "This comment is necessary")
 
-(defface moe-stroke-d5
+(defface moedict-stroke-d5
   '((((class color)) (:foreground "#080808" :background "##080808")))
   "This comment is necessary")
 
@@ -62,24 +62,24 @@
 ;; Get Data
 ;; ======================================================
 
-(defun moe-stroke-dec-to-hex (decimal-number)
+(defun moedict-stroke-dec-to-hex (decimal-number)
   (format "%x" decimal-number))
 
-(defun moe-stroke-get-file-path (character)
+(defun moedict-stroke-get-file-path (character)
   "CHARACTER is a Chinese STRING, not CHAR type in Emacs Lisp"
-  (let ((hex-string (moe-stroke-dec-to-hex (string-to-char character))))
-    (concat moe-stroke-json-directory hex-string ".json")))
+  (let ((hex-string (moedict-stroke-dec-to-hex (string-to-char character))))
+    (concat moedict-stroke-json-directory hex-string ".json")))
 
-(defun moe-stroke-get-raw-data (character)
+(defun moedict-stroke-get-raw-data (character)
   "Return a list. <ex>
  ([((y . 216) (x . 703))                   ; A sub-track (sub-stroke)
    ((size . 85) (y . 688) (x . 792))]      ; A full track done (stroke #1).
   [((y . 527) (x . 436))                   ; A sub-track (sub-stroke)
    ((size . 95) (y . 416) (x . 956))] ...) ; A full track done (stroke #2)"
   (mapcar (lambda (x) (cdr (car x)))
-          (json-read-file (moe-stroke-get-file-path character))))
+          (json-read-file (moedict-stroke-get-file-path character))))
 
-(defun moe-stroke-get-raw-strokes-data (character)
+(defun moedict-stroke-get-raw-strokes-data (character)
   "Return a list. <ex>
  (((703 . 216) (792 . 688) (300 . 500))   ; (sub-stroke sub-stroke sub-stroke) ; (stroke #1)
   ((436 . 527) (956 . 416))               ; (sub-stroke sub-stroke) ; (stroke #2)
@@ -92,17 +92,17 @@
                                (y (cdr (assq 'y sub-stroke))))
                            (cons x y)))
                  stroke))
-          (moe-stroke-get-raw-data character)))
+          (moedict-stroke-get-raw-data character)))
 
-(defun moe-stroke-get-scaled-strokes-data (character)
-  (let ((canvas-size (moe-stroke-get-canvas-size)))
+(defun moedict-stroke-get-scaled-strokes-data (character)
+  (let ((canvas-size (moedict-stroke-get-canvas-size)))
     (mapcar (lambda (raw-stroke)
               (mapcar (lambda (raw-xy)
-                        (moe-stroke-calculate-xy-on-canvas raw-xy (car canvas-size) (cdr canvas-size)))
+                        (moedict-stroke-calculate-xy-on-canvas raw-xy (car canvas-size) (cdr canvas-size)))
                       raw-stroke))
-            (moe-stroke-get-raw-strokes-data character))))
+            (moedict-stroke-get-raw-strokes-data character))))
 
-(defun moe-stroke-calculate-xy-on-canvas (raw-xy canvas-width canvas-height)
+(defun moedict-stroke-calculate-xy-on-canvas (raw-xy canvas-width canvas-height)
   "Example:
 RAW-XY       '(703 . 216)
 percents     '(0.3429268292682927 . 0.10536585365853658)
@@ -121,33 +121,33 @@ XY           '(34  . 5)
 ;; ======================================================
 ;; Canvas
 ;; ======================================================
-(defun moe-stroke-create-buffer-if-not-exist ()
-  (if (not (get-buffer moe-stroke-buffer-name))
-      (with-temp-buffer-window moe-stroke-buffer-name t nil)))
+(defun moedict-stroke-create-buffer-if-not-exist ()
+  (if (not (get-buffer moedict-stroke-buffer-name))
+      (with-temp-buffer-window moedict-stroke-buffer-name t nil)))
 
-(defun moe-stroke-get-canvas-size ()
-  (moe-stroke-create-buffer-if-not-exist)
-  (with-current-buffer moe-stroke-buffer-name
+(defun moedict-stroke-get-canvas-size ()
+  (moedict-stroke-create-buffer-if-not-exist)
+  (with-current-buffer moedict-stroke-buffer-name
     (let* ((size (min (/ (window-width) 2)
                       (window-height)))
            (x (* size 2))
            (y size))
-      (setq-local moe-stroke-canvas-width x)
-      (setq-local moe-stroke-canvas-height y)
+      (setq-local moedict-stroke-canvas-width x)
+      (setq-local moedict-stroke-canvas-height y)
       (cons x y))))
 
-(defun moe-stroke-reset-canvas ()
+(defun moedict-stroke-reset-canvas ()
   "Fill canvas buffer with spaces"
-  (let* ((xy (moe-stroke-get-canvas-size))
+  (let* ((xy (moedict-stroke-get-canvas-size))
          (x (car xy))
          (y (cdr xy)))
     (with-current-buffer
-        moe-stroke-buffer-name
+        moedict-stroke-buffer-name
       (let (buffer-read-only)
         (delete-region (point-min) (point-max))
         (loop repeat y do
-              (insert (propertize (make-string x (string-to-char moe-stroke-char))
-                                  'face 'moe-stroke-background) "\n"))))))
+              (insert (propertize (make-string x (string-to-char moedict-stroke-char))
+                                  'face 'moedict-stroke-background) "\n"))))))
 
 
 ;; ======================================================
@@ -155,46 +155,46 @@ XY           '(34  . 5)
 ;; ======================================================
 
 
-(defun moe-stroke-plot (x y brightness)
-  (with-current-buffer moe-stroke-buffer-name
+(defun moedict-stroke-plot (x y brightness)
+  (with-current-buffer moedict-stroke-buffer-name
     (let (buffer-read-only)
       (goto-char (point-min))
       (forward-line (1- y))
       (forward-char x)
       (delete-char 1)
       (insert (cond
-               ((<= brightness 0.2) (propertize moe-stroke-char 'face 'moe-stroke-d1))
-               ((<= brightness 0.4) (propertize moe-stroke-char 'face 'moe-stroke-d2))
-               ((<= brightness 0.6) (propertize moe-stroke-char 'face 'moe-stroke-d3))
-               ((<= brightness 0.8) (propertize moe-stroke-char 'face 'moe-stroke-d4))
-               (t (propertize moe-stroke-char 'face 'moe-stroke-d5))
+               ((<= brightness 0.2) (propertize moedict-stroke-char 'face 'moedict-stroke-d1))
+               ((<= brightness 0.4) (propertize moedict-stroke-char 'face 'moedict-stroke-d2))
+               ((<= brightness 0.6) (propertize moedict-stroke-char 'face 'moedict-stroke-d3))
+               ((<= brightness 0.8) (propertize moedict-stroke-char 'face 'moedict-stroke-d4))
+               (t (propertize moedict-stroke-char 'face 'moedict-stroke-d5))
                ))
       (sit-for 0.001))))
 
 (progn
-  (moe-stroke-plot 1 5 0.2)
-  (moe-stroke-plot 2 5 0.4)
-  (moe-stroke-plot 3 5 0.6)
-  (moe-stroke-plot 4 5 0.8)
-  (moe-stroke-plot 5 5 1))
+  (moedict-stroke-plot 1 5 0.2)
+  (moedict-stroke-plot 2 5 0.4)
+  (moedict-stroke-plot 3 5 0.6)
+  (moedict-stroke-plot 4 5 0.8)
+  (moedict-stroke-plot 5 5 1))
 
-(defun moe-stroke-ipart (n)
+(defun moedict-stroke-ipart (n)
   (floor n))
 
-(defun moe-stroke-round (n)
-  (moe-stroke-ipart (+ n 0.5)))
+(defun moedict-stroke-round (n)
+  (moedict-stroke-ipart (+ n 0.5)))
 
-(defun moe-stroke-fpart (n)
+(defun moedict-stroke-fpart (n)
   (if (< n 0)
       (- 1 (- n (floor n)))
     (- n (floor n))))
 
-(defun moe-stroke-rfpart (n)
-  (- 1 (moe-stroke-fpart n)))
+(defun moedict-stroke-rfpart (n)
+  (- 1 (moedict-stroke-fpart n)))
 
-(moe-stroke-draw-line '(1 . 1) '(5 . 5))
+(moedict-stroke-draw-line '(1 . 1) '(5 . 5))
 
-(defun moe-stroke-draw-line (p0 p1)
+(defun moedict-stroke-draw-line (p0 p1)
   (let* ((x0 (car p0))
          (y0 (cdr p0))
          (x1 (car p1))
@@ -218,45 +218,45 @@ XY           '(34  . 5)
           gradient (float (/ dy dx)))
 
     ;; handle first endpoint
-    (setq xend (moe-stroke-round x0)
+    (setq xend (moedict-stroke-round x0)
           yend (+ y0 (* gradient (- xend x0)))
-          xgap (moe-stroke-rfpart (+ x0 0.5))
+          xgap (moedict-stroke-rfpart (+ x0 0.5))
           xpxl1 xend              ; this will be used in the main loop
-          ypxl1 (moe-stroke-ipart yend))
+          ypxl1 (moedict-stroke-ipart yend))
     (if steep
-        (progn (moe-stroke-plot ypxl1      xpxl1 (* (moe-stroke-rfpart yend) xgap))
-               (moe-stroke-plot (1+ ypxl1) xpxl1 (* (moe-stroke-fpart yend)  xgap)))
-      (progn (moe-stroke-plot xpxl1 ypxl1      (* (moe-stroke-rfpart yend) xgap))
-             (moe-stroke-plot xpxl1 (1+ ypxl1) (* (moe-stroke-fpart  yend) xgap))))
+        (progn (moedict-stroke-plot ypxl1      xpxl1 (* (moedict-stroke-rfpart yend) xgap))
+               (moedict-stroke-plot (1+ ypxl1) xpxl1 (* (moedict-stroke-fpart yend)  xgap)))
+      (progn (moedict-stroke-plot xpxl1 ypxl1      (* (moedict-stroke-rfpart yend) xgap))
+             (moedict-stroke-plot xpxl1 (1+ ypxl1) (* (moedict-stroke-fpart  yend) xgap))))
     (setq intery (+ yend gradient)) ;; first y-intersection for the main loop
     ;; handle second endpoint
-    (setq xend (moe-stroke-round x1)
+    (setq xend (moedict-stroke-round x1)
           yend (+ y1 (* gradient (- xend x1)))
-          xgap (moe-stroke-fpart (+ x1 0.5))
+          xgap (moedict-stroke-fpart (+ x1 0.5))
           xpxl2 xend
-          ypxl2 (moe-stroke-ipart yend))
+          ypxl2 (moedict-stroke-ipart yend))
     ;; main loop
     (if steep
         (loop for x from (1+ xpxl1) to (1- xpxl2)
-              do (progn (moe-stroke-plot (moe-stroke-ipart intery) x (moe-stroke-rfpart intery))
-                        (moe-stroke-plot (1+ (moe-stroke-ipart intery)) x (moe-stroke-fpart intery))
+              do (progn (moedict-stroke-plot (moedict-stroke-ipart intery) x (moedict-stroke-rfpart intery))
+                        (moedict-stroke-plot (1+ (moedict-stroke-ipart intery)) x (moedict-stroke-fpart intery))
                         (setq intery (+ intery gradient))))
       (loop for x from (1+ xpxl1) to (1- xpxl2)
-            do (progn (moe-stroke-plot x (moe-stroke-ipart intery) (moe-stroke-rfpart intery))
-                      (moe-stroke-plot x (1+ (moe-stroke-ipart intery)) (moe-stroke-fpart intery))
+            do (progn (moedict-stroke-plot x (moedict-stroke-ipart intery) (moedict-stroke-rfpart intery))
+                      (moedict-stroke-plot x (1+ (moedict-stroke-ipart intery)) (moedict-stroke-fpart intery))
                       (setq intery (+ intery gradient)))))
     ))
 
-(defun moe-stroke (char)
-  (moe-stroke-reset-canvas)
+(defun moedict-stroke (char)
+  (moedict-stroke-reset-canvas)
   (mapc (lambda (stroke-points)
           (loop for i from 0 to (- (length stroke-points) 2)
                 for p1 = (nth i stroke-points)
                 for p2 = (nth (1+ i) stroke-points)
-                do (moe-stroke-draw-line p1 p2)))
-        (moe-stroke-get-scaled-strokes-data char)
+                do (moedict-stroke-draw-line p1 p2)))
+        (moedict-stroke-get-scaled-strokes-data char)
         ))
 
 
-(provide 'moe-stroke)
+(provide 'moedict-stroke)
 ;;; stroke.el ends here
