@@ -24,11 +24,14 @@
 
 ;;; Code:
 ;;;;;;;(defconst moedict-stroke-directory (file-name-directory load-file-name))
-
+(require 'helm)
 (setq moedict-stroke-directory (file-name-directory (buffer-file-name)))
 (setq moedict-stroke-xml-directory (concat moedict-stroke-directory "zh-stroke-data/utf8/"))
 (setq moedict-stroke-json-directory (concat moedict-stroke-directory "stroke-data-json/"))
-(setq moedict-stroke-buffer-name "*moedict-stroke*")
+(defvar moedict-stroke-candidates nil)
+(setq moedict-stroke-buffer-name "*[萌典筆劃] 動畫*")
+(setq moedict-stroke-candidate-buffer-name "*[萌典筆劃] 候選字*")
+(setq moedict-stroke-prompt "*[萌典筆劃] 請輸入您欲查詢的筆劃動畫：")
 (setq moedict-stroke-char "█")
 ;; ======================================================
 ;; Faces
@@ -69,6 +72,20 @@
   "CHARACTER is a Chinese STRING, not CHAR type in Emacs Lisp"
   (let ((hex-string (moedict-stroke-dec-to-hex (string-to-char character))))
     (concat moedict-stroke-json-directory hex-string ".json")))
+
+(defun moedict-stroke-get-candidates ()
+  (when (null moedict-stroke-candidates)
+    (message "Making cache...")
+    (setq moedict-stroke-candidates
+          (remove-if #'null
+                     (mapcar
+                      (lambda (filename)
+                        (if (string-suffix-p ".json" filename)
+                            (let ((hex-string (substring filename 0 -5)))
+                              (char-to-string (string-to-number hex-string 16)))))
+                      (directory-files moedict-stroke-json-directory))
+                     )))
+  moedict-stroke-candidates)
 
 (defun moedict-stroke-get-raw-data (character)
   "Return a list. <ex>
@@ -239,15 +256,27 @@ XY           '(34  . 5)
                       (setq intery (+ intery gradient)))))
     ))
 
-(defun moedict-stroke (char)
+(defun moedict-stroke-internal (char)
   (moedict-stroke-reset-canvas)
+  (with-temp-buffer-window moedict-stroke-buffer-name t nil)
   (mapc (lambda (stroke-points)
           (loop for i from 0 to (- (length stroke-points) 2)
                 for p1 = (nth i stroke-points)
                 for p2 = (nth (1+ i) stroke-points)
                 do (moedict-stroke-draw-line p1 p2)))
-        (moedict-stroke-get-scaled-strokes-data char)
-        ))
+        (moedict-stroke-get-scaled-strokes-data char)))
+
+(defun moedict-stroke ()
+  (interactive)
+  (helm :sources (helm-build-sync-source "[萌典] 請輸入您欲查詢的單字："
+                   :candidates (moedict-stroke-get-candidates)
+                   :volatile t
+                   :candidate-number-limit 100
+                   :action #'moedict-stroke-internal
+                   )
+        :input (or "")
+        :buffer moedict-stroke-candidate-buffer-name
+        :prompt moedict-stroke-prompt))
 
 
 (provide 'moedict-stroke)
