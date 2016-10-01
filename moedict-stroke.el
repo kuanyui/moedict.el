@@ -171,13 +171,6 @@ XY           '(34  . 5)
                ))
       (sit-for 0.001))))
 
-(progn
-  (moedict-stroke-plot 1 5 0.2)
-  (moedict-stroke-plot 2 5 0.4)
-  (moedict-stroke-plot 3 5 0.6)
-  (moedict-stroke-plot 4 5 0.8)
-  (moedict-stroke-plot 5 5 1))
-
 (defun moedict-stroke-ipart (n)
   (floor n))
 
@@ -191,8 +184,6 @@ XY           '(34  . 5)
 
 (defun moedict-stroke-rfpart (n)
   (- 1 (moedict-stroke-fpart n)))
-
-(moedict-stroke-draw-line '(1 . 1) '(5 . 5))
 
 (defun moedict-stroke-draw-line (p0 p1)
   (let* ((x0 (car p0))
