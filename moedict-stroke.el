@@ -76,8 +76,9 @@
    ((size . 85) (y . 688) (x . 792))]      ; A full track done (stroke #1).
   [((y . 527) (x . 436))                   ; A sub-track (sub-stroke)
    ((size . 95) (y . 416) (x . 956))] ...) ; A full track done (stroke #2)"
-  (mapcar (lambda (x) (cdr (car x)))
-          (json-read-file (moedict-stroke-get-file-path character))))
+  (map 'list (lambda (x)
+               (cdr (assoc 'track x)))
+       (json-read-file (moedict-stroke-get-file-path character))))
 
 (defun moedict-stroke-get-raw-strokes-data (character)
   "Return a list. <ex>
