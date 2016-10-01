@@ -27,7 +27,7 @@
 
 (setq moe-stroke-directory (file-name-directory (buffer-file-name)))
 (setq moe-stroke-xml-directory (concat moe-stroke-directory "zh-stroke-data/utf8/"))
-(setq moe-stroke-json-directory (concat moe-stroke-directory "zh-stroke-data/json/"))
+(setq moe-stroke-json-directory (concat moe-stroke-directory "stroke-data-json/"))
 (setq moe-stroke-buffer-name "*moe-stroke*")
 (setq moe-stroke-char "█")
 ;; ======================================================
