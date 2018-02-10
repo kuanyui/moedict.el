@@ -425,6 +425,7 @@ Return value is rendered string."
         (goto-char (point-min))))
     (moedict-message "完成～")))
 
+;;;###autoload
 (defun moedict (&optional init-input)
   "開啟萌典查詢界面。"
   (interactive)
