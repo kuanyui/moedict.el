@@ -209,10 +209,11 @@
 ;; Download Dictionary File
 ;; ======================================================
 
-(defun moedict-check-dictionary-file ()
+(defmacro moedict-ensure-dictionary-file-exist (&rest body)
   "If dictionary file is not existed, download & uncompress it with xz."
-  (if (not (file-exists-p moedict-dictionary-file-path))
-      (moedict-message "字典檔似乎尚未下載或解壓縮，請執行 M-x moedict-install-dictionary （可能會花上一段時間）
+  `(if (file-exists-p moedict-dictionary-file-path)
+       (progn ,@body)
+     (moedict-message "字典檔似乎尚未下載、或者尚未解壓縮，請執行 M-x moedict-install-dictionary （可能會花上一段時間）
 The dictionary file seems haven't been downloaded or extracted. Please M-x moedict-install-dictionary (It would take some time)")))
 
 (defun moedict-install-dictionary ()
@@ -429,32 +430,32 @@ Return value is rendered string."
 (defun moedict (&optional init-input)
   "開啟萌典查詢界面。"
   (interactive)
-  (moedict-check-dictionary-file)
-  (if (null
-       (helm :sources (helm-build-sync-source "[萌典] 請輸入您欲查詢的單字："
-			:candidates (lambda () (moedict-get-candidates-list helm-pattern))
-			:volatile t
-			:candidate-number-limit moedict-candidates-limit
-			:action #'moedict-lookup-and-show-in-buffer
-			:requires-pattern t)
-             :input (or init-input "")
-             :buffer moedict-candidate-buffer-name
-             :prompt moedict-prompt))
-      (moedict-message "找不到結果，取消～")))
+  (moedict-ensure-dictionary-file-exist
+   (if (null
+        (helm :sources (helm-build-sync-source "[萌典] 請輸入您欲查詢的單字："
+                         :candidates (lambda () (moedict-get-candidates-list helm-pattern))
+                         :volatile t
+                         :candidate-number-limit moedict-candidates-limit
+                         :action #'moedict-lookup-and-show-in-buffer
+                         :requires-pattern t)
+              :input (or init-input "")
+              :buffer moedict-candidate-buffer-name
+              :prompt moedict-prompt))
+       (moedict-message "找不到結果，取消～"))))
 
 (defun moedict/try-region ()
   "功能同 `moedict' ，但如果目前有文字被選取，就查詢該該文字。"
   (interactive)
-  (moedict-check-dictionary-file)
-  (if (region-active-p)
-      (moedict (buffer-substring-no-properties (region-beginning) (region-end)))
-    (moedict)))
+  (moedict-ensure-dictionary-file-exist
+   (if (region-active-p)
+       (moedict (buffer-substring-no-properties (region-beginning) (region-end)))
+     (moedict))))
 
 (defun moedict/last-vocabulary ()
   "開啟萌典查詢界面，並以目前條目為預設輸入"
   (interactive)
-  (moedict-check-dictionary-file)
-  (moedict moedict--current-vocabulary))
+  (moedict-ensure-dictionary-file-exist
+   (moedict moedict--current-vocabulary)))
 
 ;; ======================================================
 ;; Tools for Interactive Commands
@@ -683,8 +684,6 @@ Return value is string or nil"
   (setq moedict--current-vocabulary value))
 
 (provide 'moedict)
-
 ;; The ultimate answer of life, Universe, and everything is `42',
 ;; the ultimate answer of Taiwan is `689'.
-
 ;;; moedict.el ends here at line `689'.
