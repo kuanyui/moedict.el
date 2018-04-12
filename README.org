@@ -9,7 +9,7 @@ Look up (Tranditional) Chinese vocabulary with [[https://moedict.tw][MOE dict (M
 [[file:screenshot.png]]
 
 * Requirements 需求
-** System 
+** System
 - Emacs >= 24.3
 - SQLite
 
@@ -37,13 +37,13 @@ Add following to your =~/.emacs.d/init.el= or =~/.emacs=:
 * Usage 使用方法
 
 - =M-x moedict= Open the interface to look up vocabulary in moedict.
-- =M-x moedict/region= The same as =moedict=, but try to use selected region as the initial input.
+- =M-x moedict/try-region= The same as =moedict=, but try to use selected region as the initial input.
 - =M-x moedict/last-vocabulary= The same as =moedict=, but use the last query as the initial input.
 
 A superb readable "*How to use*" is available via =M-x moedict/help=.
 
 - =M-x moedict= 直接開啟萌典查詢界面。
-- =M-x moedict/region= 功能同 =moedict= ，但會嘗試搜尋被選取的文字。
+- =M-x moedict/try-region= 功能同 =moedict= ，但會嘗試搜尋被選取的文字。
 - =M-x moedict/last-vocabulary= 功能同 =moedict= ，但以上一次的查詢作為預設輸入。
 
 其餘如何使用請直接 =M-x moedict/help= 可以看超級好讀的說明書。
