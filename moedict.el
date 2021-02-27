@@ -227,7 +227,7 @@ Command 'xz' not found on your system. Please install it then try again")
       (moedict-download-dictionary-file-then-uncompress))))
 
 (defun moedict-download-dictionary-file-then-uncompress ()
-  (url-copy-file moedict-dictionary-source-url moedict-dictionary-file-path)
+  (url-copy-file moedict-dictionary-source-url moedict-dictionary-xz-file-path)
   (moedict-install-dictionary))
 
 ;; ======================================================
@@ -432,12 +432,12 @@ Return value is rendered string."
   (interactive)
   (moedict-ensure-dictionary-file-exist
    (if (null
-        (helm :sources (helm-build-sync-source "[萌典] 請輸入您欲查詢的單字："
-                         :candidates (lambda () (moedict-get-candidates-list helm-pattern))
+        (helm :sources (helm-make-source "[萌典] 請輸入您欲查詢的單字：" 'helm-source-sync
+                         `(:candidates (lambda () ,(moedict-get-candidates-list helm-pattern))
                          :volatile t
-                         :candidate-number-limit moedict-candidates-limit
-                         :action #'moedict-lookup-and-show-in-buffer
-                         :requires-pattern t)
+                         :candidate-number-limit ,moedict-candidates-limit
+                         :action moedict-lookup-and-show-in-buffer
+                         :requires-pattern t))
               :input (or init-input "")
               :buffer moedict-candidate-buffer-name
               :prompt moedict-prompt))
@@ -620,11 +620,11 @@ M-x moedict/last-vocabulary 開啟查詢界面，並以最後一次查詢為預�
   (interactive)
   (if (= (length moedict--history) 0)
       (moedict-message "目前歷史紀錄是空的喔")
-    (if (null (helm :sources (helm-build-sync-source "請選擇單字："
-                               :candidates moedict--history
+    (if (null (helm :sources (helm-make-source "請選擇單字：" 'helm-source-sync
+                               '(:candidates moedict--history
                                :volatile t
                                :action (lambda (x) (moedict-lookup-and-show-in-buffer x)
-                                         (kill-buffer moedict-history-buffer-name)))
+                                         (kill-buffer moedict-history-buffer-name))))
                     :buffer moedict-history-buffer-name
                     :prompt moedict-prompt))
         (moedict-message "取消動作！"))))
