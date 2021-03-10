@@ -244,11 +244,13 @@ Command 'xz' not found on your system. Please install it then try again")
                    (format "%s LIMIT %s" ,sql-query-string ,moedict-candidates-limit))))
 
 (defun moedict-get-candidates-list (string)
-  (cl-remove-if
-   (lambda (x) (string-prefix-p "{" x))
-   (cl-mapcon #'car (moedict-query-with-limit
-                     (format "SELECT title FROM entries WHERE title LIKE %s"
-                             (esqlite-format-text (concat string "%")))))))
+  (if (string-empty-p string)
+      ()
+    (cl-remove-if
+     (lambda (x) (string-prefix-p "{" x))
+     (cl-mapcon #'car (moedict-query-with-limit
+                       (format "SELECT title FROM entries WHERE title LIKE %s"
+                               (esqlite-format-text (concat string "%"))))))))
 
 (defun moedict-query-vocabulary (vocabulary)
   "title, radical, stroke_count, non_radical_stroke_count,
@@ -433,11 +435,12 @@ Return value is rendered string."
   (moedict-ensure-dictionary-file-exist
    (if (null
         (helm :sources (helm-make-source "[萌典] 請輸入您欲查詢的單字：" 'helm-source-sync
-                         `(:candidates (lambda () ,(moedict-get-candidates-list helm-pattern))
+                         :candidates (lambda () (moedict-get-candidates-list helm-pattern))
                          :volatile t
-                         :candidate-number-limit ,moedict-candidates-limit
-                         :action moedict-lookup-and-show-in-buffer
-                         :requires-pattern t))
+                         :candidate-number-limit moedict-candidates-limit
+                         :action #'moedict-lookup-and-show-in-buffer
+                         :requires-pattern nil  ;; seems a bug of helm
+                         :match-dynamic t)
               :input (or init-input "")
               :buffer moedict-candidate-buffer-name
               :prompt moedict-prompt))
